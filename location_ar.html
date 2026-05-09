@@ -423,6 +423,7 @@
                     const audioEl = document.createElement('audio');
                     audioEl.id = `audio-${item.target_index}`;
                     audioEl.loop = false; // ปิด loop เพื่อให้เล่นรอบเดียวจบ
+                    audioEl.preload = "auto";
                     document.body.appendChild(audioEl);
                 }
 
@@ -436,9 +437,13 @@
                     const v = document.querySelector('#main-video');
                     const plane = entity.querySelector('.video-plane');
 
-                    v.src = item.video_url;
+                    // เช็คว่า source ต้องเปลี่ยนไหม ป้องกันการกระตุกโหลดซ้ำ
+                    if (!v.src.endsWith(item.video_url)) {
+                        v.src = item.video_url;
+                        v.load();
+                    }
+
                     v.muted = true; // บังคับปิดเสียงวิดีโอไว้ก่อน เพื่อให้ผู้ใช้ฟังสุ่มเสียงแทน
-                    v.load();
 
                     try {
                         await v.play();
@@ -457,7 +462,9 @@
                     // หยุดเล่นวิดีโอ
                     const v = document.querySelector('#main-video');
                     v.pause();
-                    entity.querySelector('.video-plane').setAttribute('visible', 'false');
+
+                    // ซ่อน Plane ทุกตัวเพื่อป้องกันการแสดงค้าง
+                    document.querySelectorAll('.video-plane').forEach(p => p.setAttribute('visible', 'false'));
 
                     // หยุดเล่นไฟล์เสียง
                     if (activeTarget) {
@@ -597,9 +604,10 @@
             };
             scene.hasLoaded ? tryStart() : scene.addEventListener('loaded', tryStart);
 
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(() => console.log('Camera OK'))
-                .catch(() => showToast('กรุณาอนุญาตให้ใช้งานกล้อง'));
+            // ❌ เอาการขอสิทธิ์กล้องออก เพราะ MindAR จัดการให้เองอยู่แล้ว
+            // navigator.mediaDevices.getUserMedia({ video: true })
+            //     .then(() => console.log('Camera OK'))
+            //     .catch(() => showToast('กรุณาอนุญาตให้ใช้งานกล้อง'));
         }
 
         window.onload = () => {
