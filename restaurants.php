@@ -7,7 +7,7 @@ date_default_timezone_set('Asia/Bangkok');
 $current_time = date('H:i:s');
 
 // 1. ดึงข้อมูลร้านอาหารทั้งหมดมาก่อน
-$sql = "SELECT * FROM Restaurant ORDER BY restaurant_id DESC";
+$sql = "SELECT * FROM restaurant ORDER BY restaurant_id DESC";
 $result = $conn->query($sql);
 
 if (!$result) {
