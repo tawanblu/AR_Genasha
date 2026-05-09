@@ -5,8 +5,8 @@ ini_set('display_errors', 1);
 session_start();
 
 // ปิดการแสดง error บนหน้าเว็บช่วยป้องกันการเปิดเผยข้อมูลสำคัญของระบบ แต่ทำให้การ debug ยากขึ้น
-ini_set('display_errors', 0);
-error_reporting(0);
+// ini_set('display_errors', 0);
+// error_reporting(0);
 
 require_once("connect.php"); // เชื่อมต่อฐานข้อมูลrequire_once จะหยุดการทำงานทันทีเมื่อไฟล์มีปัญหา และป้องกันการ include ซ้ำ
 

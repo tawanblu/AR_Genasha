@@ -1,20 +1,14 @@
 <?php
-// ถ้าuserพยายามเข้าconnect.php โดยตรง ให้เด้งกลับไปหน้าindex.php
-// if ($open_connect != 1) {
-//     die(header('Location: index.php'));
-// }
+// ดึงค่าจาก Environment Variables (ถ้าไม่มีให้ใช้ค่าของ XAMPP แทน)
+$hostname = getenv('DB_HOST') ?: 'localhost';
+$username = getenv('DB_USER') ?: 'root';
+$password = getenv('DB_PASS') ?: '';
+$database = getenv('DB_NAME') ?: 'ar_ganesha'; // ฐานข้อมูลในเครื่องตัวเอง
+$port     = getenv('DB_PORT') ?: '3306';
 
-$hostname = 'localhost';
-$username = 'root';
-$password = '';
-$database = 'ar_ganesha';
-$port = 'NULL';
-$socket = 'NULL';
-$conn = mysqli_connect($hostname, $username, $password, $database);
+$conn = mysqli_connect($hostname, $username, $password, $database, $port);
 
-// เช็คการเชื่อมต่อฐานข้อมูล
 if (!$conn) {
-
     die("การเชื่อมต่อฐานข้อมูลล้มเหลว : " . mysqli_connect_error());
 } else {
     mysqli_set_charset($conn, "utf8");
