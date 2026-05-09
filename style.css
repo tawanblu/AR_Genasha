@@ -1,0 +1,1332 @@
+/* =========================================================
+   GLOBAL : พื้นหลังทั้งหน้า
+   ========================================================= */
+body {
+    font-family: 'Sarabun', sans-serif;
+    min-height: 100%;
+    color: #ffffff;
+}
+
+/* Overlay มืด */
+body::before {
+    font-family: 'Sarabun', sans-serif;
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+}
+
+:root {
+    --gold: #c9a84c;
+    /* สีทองหลักที่ใช้กับตัวหนังสือ */
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    /* ทำให้การคำนวณขนาดแม่นยำ */
+    margin: 0;
+    /* ล้างระยะห่างภายนอก */
+    padding: 0
+        /* ล้างระยะห่างภายใน */
+}
+
+.home-page {
+    background: url("image/header1.jpg") center / cover no-repeat fixed;
+    min-height: 100%;
+    color: #ffffff;
+}
+
+.sidebar-logo {
+    padding: 28px 24px 20px;
+    /* เว้นระยะห่าง บน 28px, ซ้าย-ขวา 24px, ล่าง 20px */
+    border-bottom: 1px solid var(--border);
+    /* ขีดเส้นใต้ทองจางๆ แยกส่วนโลโก้ออกมา */
+}
+
+.sidebar-logo .logo-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.25rem;
+    /* แก้จาก 1.25rem เป็น 2rem (ใหญ่ขึ้นประมาณ 60%) */
+    font-weight: 700;
+    /* เพิ่มความหนา (ปกติ Cinzel จะมี 400, 700, 900) */
+    color: var(--gold);
+    letter-spacing: .08em;
+    /* เพิ่มระยะห่างตัวอักษรเล็กน้อยให้ดูหรูขึ้นเมื่อตัวใหญ่ */
+    text-transform: uppercase;
+    /* (ตัวเลือกเสริม) ทำให้เป็นตัวพิมพ์ใหญ่ทั้งหมดจะดูขลังขึ้น */
+}
+
+/* =========================================================
+   NAVBAR
+   ========================================================= */
+/* จัดการ Navbar ให้มีความโปร่งใส (Glassmorphism) */
+.navbar {
+    background-color: rgba(0, 0, 0, 0.6) !important;
+    /* สีดำโปร่งใส 60% ปรับตัวเลข 0.6 ได้ตามต้องการ (0.0 ถึง 1.0) */
+    backdrop-filter: blur(10px);
+    /* เอฟเฟกต์เบลอพื้นหลังแบบกระจกฝ้า */
+    -webkit-backdrop-filter: blur(10px);
+    /* สำหรับ Safari */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* เพิ่มเส้นขอบบางๆ ด้านล่างให้ดูมีมิติ */
+    transition: all 0.3s ease-in-out;
+}
+
+.navbar-brand {
+    font-weight: 400;
+    font-size: 2.2rem;
+    font-family: sans-serif;
+}
+
+.navbar-nav {
+    gap: 0.5rem;
+}
+
+.navbar .nav-link {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-right: 100px;
+    color: #ffffff;
+}
+
+.navbar .nav-link:hover {
+    color: #ffc107;
+}
+
+/* =========================================================
+   HERO TEXT (ข้อความหลักหน้าแรก)
+   ========================================================= */
+section.container p.fs-3 {
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(143, 141, 141, 0.85);
+    line-height: 2.0;
+    font-size: 1.8rem !important;
+    /* override bootstrap */
+}
+
+/* =========================================================
+   BUTTON : AR
+   ========================================================= */
+.btn-ar {
+    background: rgb(255, 255, 255);
+    color: #000000;
+    border: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(6px);
+}
+
+.btn-ar:hover {
+    background: rgba(229, 190, 60, 0.9);
+    color: #2d2d2d;
+}
+
+/* =========================================
+   Contact Section
+========================================= */
+
+.contact-label {
+    display: inline-block;
+    color: #f1c40f;
+    font-size: 0.75rem;
+    /* ลดขนาดตัวอักษรป้ายกำกับ */
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+    background: rgba(241, 196, 15, 0.1);
+    padding: 0.25rem 0.8rem;
+    /* ลดความหนาของป้าย */
+    border-radius: 30px;
+    border: 1px solid rgba(241, 196, 15, 0.3);
+}
+
+.contact-head h3 {
+    font-size: 1.4rem;
+    /* ลดขนาดหัวข้อหลัก */
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ปรับตัวการ์ดให้แคบลง */
+.contact-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1rem 1rem;
+    /* ลดจาก 1.5rem 1.25rem เหลือ 1rem */
+    text-align: center;
+    color: #ffffff;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* ปรับขนาดวงกลมไอคอนให้เล็กลง */
+.contact-icon-wrap {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 0.5rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(241, 196, 15, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+    border-radius: 50%;
+    border: 1px solid rgba(241, 196, 15, 0.3);
+}
+
+/* ปรับขนาดไอคอนข้างใน */
+.contact-icon {
+    font-size: 1.1rem;
+    /* ลดจาก 1.4rem */
+    color: #f1c40f;
+}
+
+/* ปรับระยะห่างของข้อความ */
+.contact-card h5 {
+    font-size: 1rem;
+    margin-top: 0.5rem !important;
+    /* บังคับให้ระยะห่างข้างบนน้อยลง */
+}
+
+.contact-card p {
+    margin-bottom: 0.8rem !important;
+    /* ลดระยะห่างก่อนถึงปุ่ม Link */
+}
+
+.contact-link {
+    display: inline-flex;
+    align-items: center;
+    color: #f1c40f;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    /* ลดขนาดข้อความลิงก์ */
+    padding-bottom: 2px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.contact-link:hover {
+    color: #fff;
+    border-bottom-color: #f1c40f;
+}
+
+.contact-link:hover i {
+    transform: translate(3px, -3px);
+}
+
+/* =========================================================
+   AUTH LAYOUT : LOGIN / REGISTER
+   ========================================================= */
+
+.login-body {
+    min-height: 100vh;
+    margin: 0;
+}
+
+.login-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ================= LEFT : IMAGE ================= */
+
+.login-image {
+    flex: 1;
+    background: url("image/header.jpg") center / cover no-repeat;
+    position: relative;
+    padding: 80px;
+}
+
+/* overlay ดำ */
+.login-image::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+}
+
+/* ข้อความด้านซ้าย */
+.login-text {
+    position: relative;
+    max-width: 420px;
+    color: #fff;
+}
+
+.login-text h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.login-text p {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    opacity: 0.9;
+}
+
+/* =========================================================
+    INTRODUCTION + ABOUT NEW DESIGN
+   ========================================================= */
+
+
+/* ตัวหนังสือทอง */
+.gold-label {
+    color: #d4af37;
+    letter-spacing: 2px;
+    font-size: 2.2rem;
+    text-transform: uppercase;
+}
+
+/* รูปวงกลม */
+.image-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ganesha-img {
+    width: 400px;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 0 80px rgba(216, 191, 118, 0.733);
+}
+
+/* ปุ่มทอง */
+.gold-btn {
+    display: inline-block;
+    background: linear-gradient(90deg, #d4af37, #b8860b);
+    color: #ffffff;
+    padding: 10px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.gold-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.5);
+}
+
+/* บีบเนื้อหา Slider */
+.infoSlider {
+    max-width: 95% !important;
+    margin: 0 auto;
+}
+
+/* ตั้งค่าพื้นฐานให้ลูกศรใหม่ */
+.ganesha-prev,
+.ganesha-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px;
+    height: 60px;
+    cursor: pointer;
+    z-index: 999 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+
+}
+
+/* สร้างหัวลูกศรด้วย FontAwesome (หรือใช้ Unicode) */
+.ganesha-prev::after,
+.ganesha-next::after {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 30px;
+    color: #D4AF37;
+    /* สีทองแน่นอน */
+}
+
+.ganesha-prev::after {
+    content: "\f053";
+}
+
+/* ลูกศรซ้าย */
+.ganesha-next::after {
+    content: "\f054";
+}
+
+/* ลูกศรขวา */
+
+/* ดันให้ติดขอบจอ */
+.ganesha-prev {
+    left: 0px !important;
+}
+
+.ganesha-next {
+    right: 0px !important;
+}
+
+/* เอฟเฟกต์ Hover */
+.ganesha-prev:hover,
+.ganesha-next:hover {
+    opacity: 0.7;
+    transform: translateY(-50%) scale(1.1);
+}
+
+
+
+/* =========================================================
+   AUTH : RIGHT FORM
+   ========================================================= */
+
+.login-right {
+    flex: 1;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-form-box {
+    width: 100%;
+    max-width: 420px;
+    padding: 40px;
+}
+
+/* ลิงก์ Sign in มุมขวาบน */
+.top-link {
+    text-align: right;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+}
+
+.top-link a {
+    color: #20c997;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* หัวข้อ */
+.login-form-box h2 {
+    font-weight: 700;
+    margin-bottom: 30px;
+    color: #222;
+}
+
+/* input */
+.login-form-box label {
+    font-size: 0.9rem;
+    margin-top: 15px;
+    color: #444;
+}
+
+.login-form-box .form-control {
+    background: #f2f2f2;
+    border: none;
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin-top: 6px;
+}
+
+/* ปุ่ม */
+.btn-register {
+    width: 100%;
+    background: #20c997;
+    color: #fff;
+    padding: 14px;
+    border-radius: 8px;
+    margin-top: 25px;
+    font-weight: 600;
+    border: none;
+}
+
+.btn-register:hover {
+    background: #18b087;
+}
+
+.lh-lg {
+    line-height: 1.8 !important;
+}
+
+/* =========================================================
+   FEATURE SECTION (Cinematic AR) - VERSION CLEANED
+   ========================================================= */
+.feature-section .col-lg-7 {
+    font-family: var(--bs-body-font-family);
+    padding-left: 80px;
+    /* ขยับจากขอบซ้ายเข้ามา (ปรับเพิ่ม/ลดตัวเลขนี้ได้) */
+    padding-right: 40px;
+    /* เพิ่มพื้นที่ว่างฝั่งขวาเพื่อดันข้อความเข้ากลาง */
+}
+
+.feature-title {
+    font-size: 2.2rem;
+    line-height: 1.3;
+    margin-bottom: 25px;
+    color: #d4af37;
+}
+
+.feature-section h5 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 25px;
+}
+
+.feature-description p {
+    font-size: 17px;
+    line-height: 1.8;
+}
+
+/* ปรับแต่งรายการลิสต์ให้ดูเข้าที่ */
+.feature-list {
+    margin-top: 20px;
+    padding-left: 10px;
+    /* ขยับตัวลิสต์ให้ตรงกับหัวข้อ */
+}
+
+.feature-list li {
+    font-size: 17px;
+    margin-bottom: 18px;
+    padding-left: 28px;
+    position: relative;
+    line-height: 1.7;
+    color: #dcdcdc;
+}
+
+/* --- ส่วนที่แก้ไข: ฝั่งรูปภาพและปุ่ม --- */
+
+.model-wrapper {
+    position: relative;
+    display: inline-block;
+    text-align: center;
+    width: 100%;
+}
+
+/* ปุ่มจะลอยทับกึ่งกลางบนรูป */
+.model-wrapper .gold-btn {
+    position: absolute !important;
+    top: 0;
+    /* วางไว้ขอบบนสุดของ wrapper */
+    left: 52%;
+    transform: translate(-50%, -50%);
+    /* ดันขึ้นไปครึ่งหนึ่งให้ทับขอบรูปพอดี */
+    z-index: 20;
+    white-space: nowrap;
+    padding: 12px 30px;
+    font-size: 1rem;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+}
+
+.ganesha-3d-img {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    filter: drop-shadow(0 0 30px rgba(212, 175, 55, 0.152));
+    margin-top: 30px;
+    /* เว้นระยะจากด้านบนเพื่อให้ปุ่มมีที่วาง */
+}
+
+
+/* =========================================
+   Product Section - Premium Theme
+========================================= */
+.product-section {
+    background: linear-gradient(180deg, #000000 0%, #0a0a0a 100%);
+    position: relative;
+}
+
+.product-card-premium {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    padding: 1.25rem;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-card-premium:hover {
+    transform: translateY(-8px);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(201, 168, 76, 0.4);
+    /* สีทอง */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(201, 168, 76, 0.1);
+}
+
+.product-img-wrapper {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.product-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.product-card-premium:hover .product-img-wrapper img {
+    transform: scale(1.08);
+}
+
+.product-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(220, 53, 69, 0.9);
+    /* สีแดงสำหรับ Sold Out */
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 30px;
+    z-index: 2;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+.product-title {
+    font-size: 1.1rem;
+    color: #ffffff;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-clamp: 2;
+}
+
+.product-price {
+    font-size: 1.25rem;
+    color: #c9a84c;
+    /* สีทอง */
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+.btn-product-outline {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 50px;
+    transition: all 0.3s;
+}
+
+.btn-product-outline:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.btn-product-gold {
+    background: linear-gradient(135deg, #c9a84c 0%, #f0d080 50%, #c9a84c 100%);
+    border: none;
+    color: #000 !important;
+    border-radius: 50px;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+
+.btn-product-gold:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 15px rgba(201, 168, 76, 0.4);
+}
+
+/* ปรับปุ่มปิดให้อยู่มุมขวาบนเมื่อชื่อขยายใหญ่ */
+.modal-header .btn-close {
+    margin-bottom: 5px;
+}
+
+/* ปรับรูปใน Modal ให้รองรับได้ทุกสัดส่วน */
+.modal-body .img-wrapper {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    max-height: min(60vh, 380px);
+    min-height: 210px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 14px;
+    background: radial-gradient(circle at center, rgba(28, 32, 40, 0.95), rgba(11, 12, 15, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.modal-body .img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
+}
+
+--------------------------
+/* restaurant */
+--------------------------
+
+/* เพิ่มเติมจากของเดิมใน style.css */
+.gold-text {
+    background: linear-gradient(90deg, #BC923C, #D4AF37);
+    -webkit-text-fill-color: transparent;
+}
+
+/* ล้างค่า Gradient เดิมและบังคับใช้สีทอง */
+.section-title {
+    color: #D4AF37 !important;
+    /* บังคับสีทอง */
+    background: none !important;
+    /* ล้างพื้นหลัง Gradient */
+    text-shadow: 0 0 10px rgba(26, 26, 26, 0.6);
+    -webkit-text-fill-color: initial !important;
+    /* ล้างค่า Fill สีเดิม */
+    font-weight: 600;
+    font-size: 2.2rem;
+    line-height: 1.4;
+    display: block;
+}
+
+.restaurant-card {
+    transition: all 0.3s ease;
+}
+
+.restaurant-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(212, 175, 55, 0.2);
+    border-color: #D4AF37 !important;
+}
+
+.gold-btn {
+    display: inline-block;
+    background: linear-gradient(90deg, #d4af37, #b8860b);
+    color: #000 !important;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-weight: 700;
+    transition: 0.3s;
+}
+
+----------------------------------------------- .restaurant-card {
+    background: #111;
+    padding: 20px;
+    border-radius: 15px;
+    transition: 0.3s;
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.1);
+}
+
+.restaurant-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+}
+
+.restaurant-card img {
+    height: 180px;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.restaurant-card h5 {
+    margin-bottom: 10px;
+}
+
+.restaurant-card h2 {
+    color: #D4AF37;
+}
+
+.img-fluid {
+    border-radius: 15px;
+    width: 100%;
+    height: 280px;
+}
+
+.desc {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.time {
+    font-size: 0.9rem;
+    color: #bbb;
+}
+
+.time i {
+    color: #ffffff;
+    margin-right: 5px;
+}
+
+.stars {
+    color: #D4AF37;
+    margin-top: 5px;
+}
+
+/* ---------- HERO BANNER Restaurant ---------- */
+
+.hero-banner {
+    width: 100%;
+    margin-top: 70px;
+    overflow: hidden;
+}
+
+.banner-grid {
+    width: 100%;
+    height: 50vh;
+    /* สูงประมาณ 35% ของหน้าจอ */
+    min-height: 200px;
+    max-height: 450px;
+}
+
+.banner-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* การตั้งค่าสำหรับ Section */
+.food-promo-section {
+    font-family: 'Kanit', sans-serif;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.food-promo-section * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* คอนเทนเนอร์หลักของแบนเนอร์ */
+.food-promo-section .promo-banner {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    border-radius: 15px;
+    overflow: hidden;
+    /* อย่าลืมเปลี่ยน URL รูปภาพพื้นหลังตรงนี้นะครับ */
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0) 100%),
+        url('image/restarantgood.png') center/cover no-repeat;
+    background-color: #333;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* ส่วนจัดวางเนื้อหาด้านใน */
+.food-promo-section .banner-content {
+    padding: 60px 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 400px;
+}
+
+/* ส่วนข้อความด้านซ้าย */
+.food-promo-section .text-content {
+    max-width: 500px;
+    color: white;
+    z-index: 2;
+}
+
+.food-promo-section .text-content h2 {
+    color: #f7ca54;
+    font-size: 2.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.food-promo-section .text-content p {
+    font-size: 1.1rem;
+    font-weight: 300;
+    line-height: 1.5;
+    margin-bottom: 30px;
+    color: #eaeaea;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* ปุ่มดูเพิ่มเติม */
+.food-promo-section .btn-more {
+    display: inline-block;
+    background-color: #cca652;
+    color: white;
+    text-decoration: none;
+    padding: 12px 40px;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.food-promo-section .btn-more:hover {
+    background-color: #e3bd66;
+    transform: translateY(-2px);
+}
+
+/* คอนเทนเนอร์ของตราประทับ */
+.food-promo-section .badge-container {
+    position: relative;
+    z-index: 2;
+    align-self: flex-start;
+    margin-top: 20px;
+    margin-right: 20px;
+}
+
+/* สไตล์สำหรับรูปภาพตราประทับ */
+.food-promo-section .guarantee-badge-img {
+    width: 120px;
+    /* ปรับขนาดความกว้างของรูปได้ที่นี่ */
+    height: auto;
+    transform: rotate(15deg);
+    /* ทำให้รูปเอียงเล็กน้อยเหมือนในภาพต้นฉบับ */
+    filter: drop-shadow(2px 4px 10px rgba(0, 0, 0, 0.4));
+    /* เพิ่มเงาให้รูปภาพ */
+}
+
+.btn-warning {
+    border-radius: 30px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-warning:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(229, 190, 60, 0.9);
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500&display=swap');
+
+.footer-wrap {
+    background: #0a0a0a;
+    color: #ccc;
+    font-family: 'Raleway', sans-serif;
+    font-weight: 300;
+    padding: 0;
+    border-top: 1px solid #2a2a2a;
+}
+
+.footer-top {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    gap: 0;
+    border-bottom: 1px solid #1e1e1e;
+}
+
+.footer-col {
+    padding: 3rem 2.5rem;
+    border-right: none;
+}
+
+.footer-col:last-child {
+    border-right: none;
+}
+
+.brand-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    background: linear-gradient(135deg, #c9a84c 0%, #f0d080 50%, #c9a84c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0 0 0.4rem;
+    line-height: 1;
+}
+
+.brand-tagline {
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    color: #666;
+    text-transform: uppercase;
+    margin: 0 0 2rem;
+}
+
+.map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: transparent;
+    border: 1px solid #c9a84c;
+    color: #c9a84c;
+    font-family: 'Raleway', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.55rem 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 2rem;
+}
+
+.map-btn:hover {
+    background: #c9a84c;
+    color: #0a0a0a;
+}
+
+.map-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.follow-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    /* แก้สีตรงบรรทัดนี้ครับ ลองใช้สีทองหรือขาวสว่างๆ */
+    color: #c9a84c;
+    /* เปลี่ยนเป็นสีทองให้เข้ากับธีมเว็บ */
+    text-transform: uppercase;
+    margin: 0 0 0.8rem;
+}
+
+.social-row {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.social-link {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    text-decoration: none;
+    transition: all 0.3s;
+    font-size: 0.85rem;
+}
+
+.social-link:hover {
+    border-color: #c9a84c;
+    color: #c9a84c;
+}
+
+.col-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: 0.35em;
+    color: #c9a84c;
+    text-transform: uppercase;
+    margin: 0 0 1.6rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #1e1e1e;
+}
+
+.contact-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.82rem;
+    color: #888;
+    line-height: 1.5;
+}
+
+.contact-item svg {
+    width: 14px;
+    height: 14px;
+    color: #c9a84c;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.nav-link {
+    display: block;
+    font-size: 0.82rem;
+    color: #777;
+    text-decoration: none;
+    padding: 0.45rem 0;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid transparent;
+    transition: all 0.25s;
+}
+
+.nav-link:hover {
+    color: #c9a84c;
+    padding-left: 0.5rem;
+}
+
+.footer-bottom {
+    padding: 1.4rem 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.copyright {
+    font-size: 0.72rem;
+    color: #444;
+    letter-spacing: 0.05em;
+}
+
+.gold-line {
+    width: 40px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #c9a84c, transparent);
+    margin: 0 auto;
+}
+
+@media (max-width: 700px) {
+    .footer-top {
+        grid-template-columns: 1fr;
+    }
+
+    .footer-col {
+        border-right: none;
+        border-bottom: 1px solid #1e1e1e;
+        padding: 2rem 1.5rem;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+
+    .p-title-big {
+        font-size: 2rem !important;
+    }
+}
+
+
+/* Responsive fixes for cards */
+@media (max-width: 768px) {
+    .product-card h6 {
+        font-size: 0.9rem;
+    }
+
+    .custom-tabs {
+        font-size: 0.8rem;
+    }
+}
+
+/* ปรับแต่ง Responsive เพิ่มเติม */
+@media (max-width: 991px) {
+    .feature-content {
+        text-align: center;
+    }
+
+    .feature-list li {
+        justify-content: center;
+    }
+
+    .feature-section h2 {
+        font-size: 1.8rem;
+    }
+
+    .feature-section h3 {
+        font-size: 1.4rem;
+    }
+
+    .p-title-big {
+        font-size: 2rem !important;
+    }
+}
+
+
+
+
+@keyframes rotateIcon {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE : TABLET
+   ========================================================= */
+@media (max-width: 991px) {
+
+    .navbar .nav-link {
+        margin-right: 0;
+        font-size: 1rem;
+        padding: 0.65rem 0.9rem;
+    }
+
+    .navbar-brand {
+        font-size: 2rem;
+    }
+
+    section.container {
+        margin-top: 1rem !important;
+        padding-top: 5rem !important;
+        max-width: 920px;
+    }
+
+    section.container p.fs-3 {
+        font-size: 1.5rem !important;
+        line-height: 1.85;
+    }
+
+    .feature-section .col-lg-7 {
+        padding-left: 40px;
+        padding-right: 28px;
+        text-align: left;
+    }
+
+    .feature-title {
+        font-size: 2rem;
+    }
+
+    .feature-list li {
+        font-size: 1rem;
+        margin-bottom: 14px;
+    }
+
+    .ganesha-3d-img {
+        max-width: 400px;
+    }
+
+    .product-card-premium {
+        padding: 1rem;
+    }
+
+    .p-title-big {
+        font-size: 2rem !important;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE : MOBILE
+   ========================================================= */
+@media (max-width: 576px) {
+
+    body {
+        background-attachment: scroll;
+        background-position: center top;
+        background-size: cover;
+    }
+
+    section.container {
+        text-align: left;
+        margin-top: 0.5rem !important;
+        padding-top: 4.75rem !important;
+    }
+
+    section.container p.fs-3 {
+        font-size: 1.2rem !important;
+        line-height: 1.75;
+    }
+
+    .btn-ar {
+        font-size: 1rem;
+        padding: 12px 24px;
+    }
+
+    .contact-glass {
+        padding: 28px 10px;
+    }
+
+    .contact-glass .container {
+        padding: 20px 14px;
+        border-radius: 18px;
+    }
+
+    .contact-icon {
+        font-size: 30px;
+    }
+
+    .contact-glass h5 {
+        font-size: 1rem;
+    }
+
+    .contact-glass p {
+        font-size: 0.85rem;
+    }
+
+    .contact-head h3 {
+        font-size: 1.22rem;
+    }
+
+    .contact-card {
+        padding: 22px 18px;
+    }
+
+    .contact-icon-wrap {
+        width: 58px;
+        height: 58px;
+    }
+
+    .infoSlider {
+        max-width: 100% !important;
+    }
+
+    .ganesha-prev,
+    .ganesha-next {
+        display: none !important;
+    }
+
+    .feature-section .col-lg-7 {
+        padding-left: 15px;
+        padding-right: 15px;
+        text-align: left;
+    }
+
+    .feature-title {
+        font-size: 1.55rem;
+        line-height: 1.4;
+    }
+
+    .feature-description p {
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+
+    .feature-list li {
+        text-align: left;
+        display: list-item;
+        width: 100%;
+        max-width: none;
+        padding-left: 22px;
+        margin-bottom: 12px;
+    }
+
+    .ganesha-3d-img {
+        max-width: 320px;
+        margin-top: 10px;
+    }
+
+    .ganesha-img {
+        width: min(84vw, 320px);
+        height: min(84vw, 320px);
+    }
+
+    .product-section .container {
+        margin-top: 0 !important;
+    }
+
+    .product-card-premium {
+        border-radius: 16px;
+    }
+
+    .product-title {
+        font-size: 1rem;
+    }
+
+    .product-price {
+        font-size: 1.06rem;
+    }
+
+    .p-title-big {
+        font-size: 1.5rem !important;
+    }
+}

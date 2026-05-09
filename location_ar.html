@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ganesha AR - Video & Random Audio</title>
+
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Sarabun:wght@300;400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --gold: #d4a843;
+            --gold-light: #f0c96b;
+            --gold-border: rgba(212, 168, 67, 0.28);
+            --deep: #0f0400;
+            --text-dim: rgba(253, 240, 208, 0.60);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            overflow: hidden;
+            background: var(--deep);
+            font-family: 'Sarabun', sans-serif;
+            color: var(--gold-light);
+        }
+
+        a-scene {
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* ═══════════ MENU ═══════════ */
+        #menu {
+            position: fixed;
+            inset: 0;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: radial-gradient(ellipse 75% 55% at 50% 38%, rgba(180, 55, 5, 0.55) 0%, rgba(120, 30, 0, 0.30) 40%, transparent 70%),
+                radial-gradient(ellipse 100% 80% at 50% 0%, rgba(90, 20, 0, 0.40) 0%, transparent 65%), #0f0400;
+            transition: opacity 0.55s ease, transform 0.55s ease;
+        }
+
+        #menu.hide {
+            opacity: 0;
+            transform: scale(1.04);
+            pointer-events: none;
+        }
+
+        #menu::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(212, 168, 67, 0.055) 1px, transparent 1px);
+            background-size: 28px 28px;
+            pointer-events: none;
+        }
+
+        #menu-panel {
+            position: relative;
+            z-index: 2;
+            width: min(92vw, 420px);
+            background: rgba(18, 6, 0, 0.80);
+            border: 1px solid rgba(212, 168, 67, 0.22);
+            border-radius: 24px;
+            padding: clamp(32px, 6vw, 46px) clamp(24px, 5vw, 40px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 0 0 1px rgba(212, 168, 67, 0.05) inset, 0 32px 80px rgba(0, 0, 0, 0.65), 0 0 80px rgba(160, 50, 0, 0.10);
+        }
+
+        .om {
+            font-size: clamp(2.6rem, 8vw, 3.4rem);
+            color: var(--gold-light);
+            line-height: 1;
+            margin-bottom: 12px;
+            text-shadow: 0 0 28px rgba(212, 168, 67, 0.35);
+        }
+
+        .title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            font-weight: 900;
+            color: var(--gold-light);
+            letter-spacing: 0.05em;
+            margin-bottom: 14px;
+            line-height: 1.2;
+        }
+
+        .desc {
+            font-size: clamp(0.80rem, 2.2vw, 0.90rem);
+            color: var(--text-dim);
+            line-height: 1.8;
+            font-weight: 300;
+            margin-bottom: 22px;
+        }
+
+        #start-btn {
+            width: 100%;
+            padding: 16px 24px;
+            border-radius: 14px;
+            border: 1px solid rgba(212, 168, 67, 0.32);
+            background: linear-gradient(135deg, #b83e0a 0%, #7a2006 60%, #4e1003 100%);
+            color: var(--gold-light);
+            font-family: 'Sarabun', sans-serif;
+            font-size: clamp(0.9rem, 2.4vw, 1rem);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.28s ease;
+            box-shadow: 0 4px 20px rgba(180, 60, 10, 0.30), 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+        }
+
+        #start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(180, 60, 10, 0.45);
+        }
+
+        #start-btn:active {
+            transform: translateY(0);
+        }
+
+        #start-btn:disabled {
+            background: linear-gradient(135deg, #2a2420, #1a1410);
+            border-color: rgba(212, 168, 67, 0.10);
+            color: rgba(253, 240, 208, 0.28);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #location-status {
+            font-size: 0.78rem;
+            color: #7ed99a;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            margin-top: 14px;
+            min-height: 1.2em;
+        }
+
+        #location-status.fail {
+            color: #ff7878;
+        }
+
+        /* ═══════════ SCANNING OVERLAY ═══════════ */
+        #scanning-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: max(22px, env(safe-area-inset-top, 22px));
+            z-index: 200;
+            pointer-events: none;
+        }
+
+        #scan-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            background: rgba(15, 4, 0, 0.88);
+            border: 1px solid var(--gold-border);
+            border-radius: 999px;
+            padding: 10px 20px 10px 14px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+            pointer-events: auto;
+        }
+
+        .scan-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--gold);
+            animation: pulse 1.8s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(212, 168, 67, 0.5);
+            }
+
+            50% {
+                opacity: 0.6;
+                box-shadow: 0 0 0 5px rgba(212, 168, 67, 0);
+            }
+        }
+
+        .scan-text {
+            font-size: 0.88rem;
+            color: var(--gold-light);
+        }
+
+        .scan-frame {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(68vw, 260px);
+            aspect-ratio: 3/4;
+            pointer-events: none;
+        }
+
+        .scan-frame span {
+            position: absolute;
+            width: 26px;
+            height: 26px;
+            border-color: rgba(212, 168, 67, 0.65);
+            border-style: solid;
+        }
+
+        .scan-frame span:nth-child(1) {
+            top: 0;
+            left: 0;
+            border-width: 2px 0 0 2px;
+            border-radius: 4px 0 0 0;
+        }
+
+        .scan-frame span:nth-child(2) {
+            top: 0;
+            right: 0;
+            border-width: 2px 2px 0 0;
+            border-radius: 0 4px 0 0;
+        }
+
+        .scan-frame span:nth-child(3) {
+            bottom: 0;
+            right: 0;
+            border-width: 0 2px 2px 0;
+            border-radius: 0 0 4px 0;
+        }
+
+        .scan-frame span:nth-child(4) {
+            bottom: 0;
+            left: 0;
+            border-width: 0 0 2px 2px;
+            border-radius: 0 0 0 4px;
+        }
+
+        /* ═══════════ PLAY AUDIO CONTROLS (ปุ่มกดเสียง) ═══════════ */
+        #audio-controls {
+            position: fixed;
+            bottom: clamp(30px, 8vh, 50px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 300;
+            display: none;
+        }
+
+        #play-random-btn {
+            background: rgba(15, 4, 0, 0.90);
+            border: 1px solid var(--gold);
+            color: var(--gold-light);
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 168, 67, 0.2);
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s, background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #play-random-btn:hover {
+            transform: scale(1.05);
+            background: rgba(30, 8, 0, 0.95);
+        }
+
+        #play-random-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(16px);
+            opacity: 0;
+            background: rgba(20, 6, 0, 0.94);
+            border: 1px solid rgba(255, 100, 80, 0.32);
+            color: #ff9080;
+            padding: 12px 20px;
+            border-radius: 14px;
+            font-size: 0.86rem;
+            z-index: 9999;
+            max-width: min(88vw, 340px);
+            text-align: center;
+            backdrop-filter: blur(14px);
+            transition: all 0.35s ease;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── MENU ── -->
+    <div id="menu">
+        <div id="menu-panel">
+            <div class="om">ॐ</div>
+            <div class="title">Ganesha AR</div>
+            <p class="desc">
+                [โหมดทดสอบ] สามารถใช้งานได้ทุกที่<br>
+                กดเริ่ม AR เพื่อเปิดกล้องสแกน
+            </p>
+            <button id="start-btn" onclick="startMindAR()">✦ เริ่ม AR</button>
+            <div id="location-status">โหมดทดสอบ: ปิดการล็อกพิกัด</div>
+        </div>
+    </div>
+
+    <!-- ── SCANNING OVERLAY ── -->
+    <div id="scanning-overlay">
+        <div id="scan-hint">
+            <div class="scan-dot"></div>
+            <span class="scan-text">ชี้กล้องไปที่ภาพ Ganesha</span>
+        </div>
+        <div class="scan-frame">
+            <span></span><span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <!-- ── AUDIO CONTROLS (ปุ่มกดสุ่มเสียง จะซ่อนไว้ตอนแรก) ── -->
+    <div id="audio-controls">
+        <button id="play-random-btn">🔊 รับคำอวยพร / ฟังบทสวด</button>
+    </div>
+
+    <!-- ── A-Frame Scene ── -->
+    <a-scene id="scene" mindar-image="imageTargetSrc: mind_files/targets.mind; autoStart: false; uiScanning: no;"
+        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+
+        <!-- โหลดไฟล์วิดีโอเตรียมไว้ตรงนี้ -->
+        <a-assets>
+            <video id="main-video" loop playsinline webkit-playsinline muted crossorigin="anonymous"></video>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    </a-scene>
+
+    <script>
+        const scene = document.querySelector('#scene');
+        let activeTarget = null;
+
+        // ── ข้อมูลวิดีโอ และ กลุ่มเสียง (สุ่มเสียง) ──
+        // กำหนดไฟล์วิดีโอเป็น videos/AR_MOVE_SU01.mp4 ทุก target
+        const data = [
+            { target_index: 0, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 1, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 2, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 3, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 4, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 5, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 6, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 7, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 8, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 9, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 10, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 11, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 12, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 13, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 14, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 15, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+        ];
+
+        function loadAR() {
+            data.forEach(item => {
+                const entity = document.createElement('a-entity');
+                entity.setAttribute('mindar-image-target', `targetIndex: ${item.target_index}`);
+
+                // ── สร้างแผ่นสี่เหลี่ยม (Plane) สำหรับแสดงวิดีโอ ──
+                const aPlane = document.createElement('a-plane');
+                aPlane.setAttribute('width', item.width || '1');
+                aPlane.setAttribute('height', item.height || '1.5');
+                aPlane.setAttribute('rotation', item.rotation || '0 0 0');
+                aPlane.setAttribute('material', 'shader: flat; src: #main-video; transparent: true');
+                aPlane.setAttribute('visible', 'false');
+                aPlane.classList.add('video-plane');
+
+                entity.appendChild(aPlane);
+                scene.appendChild(entity);
+
+                // เตรียม Element เสียงรอไว้สำหรับระบบสุ่ม
+                if (item.audio_urls && item.audio_urls.length > 0) {
+                    const audioEl = document.createElement('audio');
+                    audioEl.id = `audio-${item.target_index}`;
+                    audioEl.loop = false; // ปิด loop เพื่อให้เล่นรอบเดียวจบ
+                    document.body.appendChild(audioEl);
+                }
+
+                // ── เมื่อสแกนเจอภาพ ──
+                entity.addEventListener('targetFound', async () => {
+                    document.getElementById('scanning-overlay').style.display = 'none';
+                    document.getElementById('audio-controls').style.display = 'block';
+                    activeTarget = item;
+
+                    // สั่งให้วิดีโอเปลี่ยนซอร์สและเล่น
+                    const v = document.querySelector('#main-video');
+                    const plane = entity.querySelector('.video-plane');
+
+                    v.src = item.video_url;
+                    v.muted = true; // บังคับปิดเสียงวิดีโอไว้ก่อน เพื่อให้ผู้ใช้ฟังสุ่มเสียงแทน
+                    v.load();
+
+                    try {
+                        await v.play();
+                    } catch (err) {
+                        console.error("Video play error:", err);
+                    }
+
+                    plane.setAttribute('visible', 'true');
+                });
+
+                // ── เมื่อหลุดโฟกัสจากภาพ ──
+                entity.addEventListener('targetLost', () => {
+                    document.getElementById('scanning-overlay').style.display = 'flex';
+                    document.getElementById('audio-controls').style.display = 'none';
+
+                    // หยุดเล่นวิดีโอ
+                    const v = document.querySelector('#main-video');
+                    v.pause();
+                    entity.querySelector('.video-plane').setAttribute('visible', 'false');
+
+                    // หยุดเล่นไฟล์เสียง
+                    if (activeTarget) {
+                        const audio = document.getElementById(`audio-${activeTarget.target_index}`);
+                        if (audio) {
+                            audio.pause();
+                            audio.currentTime = 0;
+                        }
+                    }
+                    activeTarget = null;
+                });
+            });
+        }
+
+        // ── จัดการการกดปุ่ม "✨ รับคำอวยพร / ฟังบทสวด" ──
+        document.getElementById('play-random-btn').addEventListener('click', () => {
+            if (!activeTarget || !activeTarget.audio_urls || activeTarget.audio_urls.length === 0) return;
+
+            const audio = document.getElementById(`audio-${activeTarget.target_index}`);
+            if (audio) {
+                // สุ่มเสียงจาก Array ของแต่ละวิดีโอ/เป้าหมาย
+                const randomIndex = Math.floor(Math.random() * activeTarget.audio_urls.length);
+                const randomSound = activeTarget.audio_urls[randomIndex];
+
+                audio.src = randomSound;
+                audio.currentTime = 0;
+                audio.play().catch(e => console.error("Error playing audio:", e));
+            }
+        });
+
+        let toastTimer;
+        function showToast(msg) {
+            clearTimeout(toastTimer);
+            document.querySelector('.toast')?.remove();
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            requestAnimationFrame(() => t.classList.add('show'));
+            toastTimer = setTimeout(() => {
+                t.classList.remove('show');
+                setTimeout(() => t.remove(), 400);
+            }, 4500);
+        }
+
+        // ==========================================
+        // 📍 โค้ดส่วนระบบ GPS (คอมเมนต์ไว้สำหรับตอนเทส)
+        // เมื่อพร้อมใช้งานจริง ให้นำเครื่องหมาย /* และ */ ด้านล่างนี้ออก 
+        // และแก้ไข <button id="start-btn" onclick="startMindAR()"> ด้านบน เป็น onclick="checkLocationAuto()" 
+        // ==========================================
+        /*
+        const TARGET_LAT = 13.730248; 
+        const TARGET_LNG = 100.521570; 
+        const MAX_DISTANCE = 50; 
+
+        function setStatus(text, cls = '') {
+            const el = document.getElementById('location-status');
+            if(el) {
+                el.textContent = text;
+                el.className = cls;
+            }
+        }
+
+        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function checkLocationAuto() {
+            const btn = document.getElementById('start-btn');
+            btn.disabled = true;
+            btn.textContent = '📍 กำลังตรวจสอบตำแหน่ง...';
+            setStatus('กำลังดึงข้อมูลพิกัด GPS...');
+
+            if (!navigator.geolocation) {
+                showToast('เบราว์เซอร์ไม่รองรับ GPS');
+                setStatus('อุปกรณ์ไม่รองรับ GPS', 'fail');
+                btn.textContent = 'ไม่สามารถใช้งานได้';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                ({ coords }) => {
+                    const dist = getDistanceFromLatLonInM(coords.latitude, coords.longitude, TARGET_LAT, TARGET_LNG);
+                    if (dist <= MAX_DISTANCE) {
+                        setStatus('✓ ท่านอยู่ในพื้นที่แล้ว', 'ok');
+                        btn.disabled = false;
+                        btn.textContent = '✦ เริ่ม AR';
+                        btn.onclick = startMindAR; 
+                    } else {
+                        showToast(`คุณอยู่ห่างจากสถานที่ ${Math.round(dist)} เมตร\n(ต้องอยู่ภายใน ${MAX_DISTANCE} เมตร)`);
+                        setStatus(`ห่างจากพื้นที่ ${Math.round(dist)} ม.`, 'fail');
+                        btn.disabled = false;
+                        btn.textContent = '↻ ตรวจสอบตำแหน่งอีกครั้ง';
+                        btn.onclick = checkLocationAuto; 
+                    }
+                },
+                (err) => {
+                    const msgs = {
+                        1: 'กรุณาอนุญาตการเข้าถึงตำแหน่ง (GPS)',
+                        2: 'ไม่สามารถระบุตำแหน่งได้ในขณะนี้',
+                        3: 'หมดเวลาดึงข้อมูลตำแหน่ง กรุณาลองใหม่',
+                    };
+                    showToast(msgs[err.code] || 'เกิดข้อผิดพลาด GPS');
+                    setStatus('ไม่สามารถดึงตำแหน่งได้', 'fail');
+                    btn.disabled = false;
+                    btn.textContent = '↻ ลองตรวจสอบอีกครั้ง';
+                    btn.onclick = checkLocationAuto; 
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+        */
+        // ==========================================
+
+        function startMindAR() {
+            // ปลดล็อกเสียงและวิดีโอ (จำเป็นสำหรับ iOS)
+            document.querySelectorAll('audio').forEach(audio => {
+                audio.play().then(() => audio.pause()).catch(err => console.log("Unlock audio err:", err));
+            });
+            const v = document.querySelector('#main-video');
+            v.play().then(() => v.pause()).catch(() => { });
+
+            const menu = document.getElementById('menu');
+            menu.classList.add('hide');
+            setTimeout(() => menu.style.display = 'none', 650);
+
+            document.getElementById('scanning-overlay').style.display = 'flex';
+
+            const tryStart = () => {
+                const sys = scene.systems['mindar-image-system'];
+                sys ? sys.start() : console.error('MindAR not ready');
+            };
+            scene.hasLoaded ? tryStart() : scene.addEventListener('loaded', tryStart);
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(() => console.log('Camera OK'))
+                .catch(() => showToast('กรุณาอนุญาตให้ใช้งานกล้อง'));
+        }
+
+        window.onload = () => {
+            loadAR();
+        };
+    </script>
+</body>
+
+</html>
