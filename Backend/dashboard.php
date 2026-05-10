@@ -16,7 +16,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
 $adminNav = basename($_SERVER['PHP_SELF']);
 
 $userCount       = $conn->query("SELECT COUNT(*) as total FROM accounts")->fetch_assoc()['total'];
-$ganeshaCount    = $conn->query("SELECT COUNT(*) as total FROM ganesha_Info")->fetch_assoc()['total'];
+$ganeshaCount    = $conn->query("SELECT COUNT(*) as total FROM ganesha_info")->fetch_assoc()['total'];
 $restaurantCount = $conn->query("SELECT COUNT(*) as total FROM restaurant")->fetch_assoc()['total'];
 $ARLocationCount = $conn->query("SELECT COUNT(*) as total FROM ar_media")->fetch_assoc()['total'];
 $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->fetch_assoc()['total'];
