@@ -56,7 +56,7 @@ if (isset($_POST['add_media'])) {
         }
 
         // 3. บันทึกลงฐานข้อมูล
-        $sql  = "INSERT INTO AR_Media (info_id, file_path, audio_file, media_type) VALUES (?, ?, ?, ?)";
+        $sql  = "INSERT INTO ar_media (info_id, file_path, audio_file, media_type) VALUES (?, ?, ?, ?)";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("isss", $info_id, $db_path, $db_audio_path, $media_type);
 
@@ -82,7 +82,7 @@ if (isset($_POST['edit_media'])) {
         if ($media_id <= 0) throw new Exception("ID ข้อมูลไม่ถูกต้อง");
 
         // ดึงข้อมูลเดิมมาตรวจสอบ
-        $res = $conn->query("SELECT file_path, audio_file FROM AR_Media WHERE media_id = $media_id");
+        $res = $conn->query("SELECT file_path, audio_file FROM ar_media WHERE media_id = $media_id");
         if (!$res) throw new Exception("Query Failed: " . $conn->error);
 
         $current_data = $res->fetch_assoc();
@@ -126,7 +126,7 @@ if (isset($_POST['edit_media'])) {
         }
 
         // 3. อัปเดตข้อมูลในฐานข้อมูล
-        $sql  = "UPDATE AR_Media SET info_id=?, file_path=?, audio_file=?, media_type=? WHERE media_id=?";
+        $sql  = "UPDATE ar_media SET info_id=?, file_path=?, audio_file=?, media_type=? WHERE media_id=?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("isssi", $info_id, $db_path, $db_audio_path, $media_type, $media_id);
 
@@ -152,11 +152,11 @@ if (isset($_GET['delete'])) {
     }
 
     // ดึงชื่อไฟล์มาก่อน
-    $res = $conn->query("SELECT file_path, audio_file FROM AR_Media WHERE media_id = $id");
+    $res = $conn->query("SELECT file_path, audio_file FROM ar_media WHERE media_id = $id");
     $data = $res ? $res->fetch_assoc() : null;
 
     // สั่งลบข้อมูลในฐานข้อมูล
-    $sql = "DELETE FROM AR_Media WHERE media_id = $id";
+    $sql = "DELETE FROM ar_media WHERE media_id = $id";
 
     if ($conn->query($sql) === TRUE) {
         // ถ้าลบใน DB สำเร็จ ค่อยลบไฟล์ทิ้ง
@@ -176,7 +176,7 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
-$result = $conn->query("SELECT * FROM AR_Media ORDER BY media_id DESC");
+$result = $conn->query("SELECT * FROM ar_media ORDER BY media_id DESC");
 $adminNav = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
