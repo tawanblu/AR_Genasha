@@ -63,7 +63,7 @@ if (isset($_POST['edit_restaurant'])) {
     $open_time = $_POST['open_time'];
     $close_time = $_POST['close_time'];
 
-    $stmt = $conn->prepare("UPDATE Restaurant SET restaurant_name=?,category=?,detail=?,map_url=?,open_time=?,close_time=? WHERE restaurant_id=?");
+    $stmt = $conn->prepare("UPDATE restaurant SET restaurant_name=?,category=?,detail=?,map_url=?,open_time=?,close_time=? WHERE restaurant_id=?");
     $stmt->bind_param("ssssssi", $name, $category, $detail, $map_url, $open_time, $close_time, $rid);
     $stmt->execute();
 
@@ -103,12 +103,12 @@ if (isset($_GET['delete'])) {
     while ($row = $res->fetch_assoc()) {
         if (file_exists("../Restaurants/" . $row['file_path'])) unlink("../Restaurants/" . $row['file_path']);
     }
-    $conn->query("DELETE FROM Restaurant WHERE restaurant_id=$id");
+    $conn->query("DELETE FROM restaurant WHERE restaurant_id=$id");
     header("Location: manage_restaurant.php?ok=del");
     exit();
 }
 
-$result = $conn->query("SELECT r.*,(SELECT file_path FROM restaurant_image WHERE restaurant_id=r.restaurant_id LIMIT 1) AS file_path FROM Restaurant r ORDER BY r.restaurant_id DESC");
+$result = $conn->query("SELECT r.*,(SELECT file_path FROM restaurant_image WHERE restaurant_id=r.restaurant_id LIMIT 1) AS file_path FROM restaurant r ORDER BY r.restaurant_id DESC");
 $total = $result->num_rows;
 $adminNav = basename($_SERVER['PHP_SELF']);
 ?>
