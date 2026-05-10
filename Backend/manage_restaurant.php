@@ -39,7 +39,7 @@ if (isset($_POST['add_restaurant'])) {
                 $tempname = $_FILES['res_imgs']['tmp_name'][$key];
                 $ext = pathinfo($filename, PATHINFO_EXTENSION);
                 $new_filename = time() . "_" . rand(1000, 9999) . "_" . $key . "." . $ext;
-                if (move_uploaded_file($tempname, "../restaurants/" . $new_filename)) {
+                if (move_uploaded_file($tempname, "../Restaurants/" . $new_filename)) {
                     $si->bind_param("is", $rid, $new_filename);
                     $si->execute();
                 }
@@ -63,7 +63,7 @@ if (isset($_POST['edit_restaurant'])) {
     $open_time = $_POST['open_time'];
     $close_time = $_POST['close_time'];
 
-    $stmt = $conn->prepare("UPDATE restaurant SET restaurant_name=?,category=?,detail=?,map_url=?,open_time=?,close_time=? WHERE restaurant_id=?");
+    $stmt = $conn->prepare("UPDATE Restaurant SET restaurant_name=?,category=?,detail=?,map_url=?,open_time=?,close_time=? WHERE restaurant_id=?");
     $stmt->bind_param("ssssssi", $name, $category, $detail, $map_url, $open_time, $close_time, $rid);
     $stmt->execute();
 
@@ -73,7 +73,7 @@ if (isset($_POST['edit_restaurant'])) {
             $tempname = $_FILES['res_imgs']['tmp_name'][$key];
             $ext = pathinfo($filename, PATHINFO_EXTENSION);
             $new_filename = time() . "_" . rand(1000, 9999) . "_" . $key . "." . $ext;
-            if (move_uploaded_file($tempname, "../restaurants/" . $new_filename)) {
+            if (move_uploaded_file($tempname, "../Restaurants/" . $new_filename)) {
                 $si->bind_param("is", $rid, $new_filename);
                 $si->execute();
             }
@@ -88,7 +88,7 @@ if (isset($_GET['del_img'])) {
     $iid = intval($_GET['del_img']);
     $r = $conn->query("SELECT file_path FROM restaurant_image WHERE image_id=$iid");
     if ($row = $r->fetch_assoc()) {
-        $f = "../restaurants/" . $row['file_path'];
+        $f = "../Restaurants/" . $row['file_path'];
         if (file_exists($f)) unlink($f);
     }
     $conn->query("DELETE FROM restaurant_image WHERE image_id=$iid");
@@ -101,14 +101,14 @@ if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $res = $conn->query("SELECT file_path FROM restaurant_image WHERE restaurant_id=$id");
     while ($row = $res->fetch_assoc()) {
-        if (file_exists("../restaurants/" . $row['file_path'])) unlink("../restaurants/" . $row['file_path']);
+        if (file_exists("../Restaurants/" . $row['file_path'])) unlink("../Restaurants/" . $row['file_path']);
     }
-    $conn->query("DELETE FROM restaurant WHERE restaurant_id=$id");
+    $conn->query("DELETE FROM Restaurant WHERE restaurant_id=$id");
     header("Location: manage_restaurant.php?ok=del");
     exit();
 }
 
-$result = $conn->query("SELECT r.*,(SELECT file_path FROM restaurant_image WHERE restaurant_id=r.restaurant_id LIMIT 1) AS file_path FROM restaurant r ORDER BY r.restaurant_id DESC");
+$result = $conn->query("SELECT r.*,(SELECT file_path FROM restaurant_image WHERE restaurant_id=r.restaurant_id LIMIT 1) AS file_path FROM Restaurant r ORDER BY r.restaurant_id DESC");
 $total = $result->num_rows;
 $adminNav = basename($_SERVER['PHP_SELF']);
 ?>
@@ -865,7 +865,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                             $img_res = $conn->query("SELECT * FROM restaurant_image WHERE restaurant_id=$rid");
                             $images_html = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">';
                             while ($img_row = $img_res->fetch_assoc()) {
-                                $images_html .= '<div class="img-preview-box"><img src="../restaurants/' . htmlspecialchars($img_row['file_path']) . '" onerror="this.src=\'../restaurants/default.jpg\'"><a href="?del_img=' . $img_row['image_id'] . '" class="btn-remove" onclick="return confirm(\'ลบรูปภาพนี้?\')"><i class="bi bi-x"></i></a></div>';
+                                $images_html .= '<div class="img-preview-box"><img src="../Restaurants/' . htmlspecialchars($img_row['file_path']) . '" onerror="this.src=\'../Restaurants/default.jpg\'"><a href="?del_img=' . $img_row['image_id'] . '" class="btn-remove" onclick="return confirm(\'ลบรูปภาพนี้?\')"><i class="bi bi-x"></i></a></div>';
                             }
                             $images_html .= '</div>';
 
@@ -884,8 +884,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                     ?>
                             <tr>
                                 <td>
-                                    <img src="../restaurants/<?= htmlspecialchars($row['file_path'] ?? 'default.jpg') ?>"
-                                        class="img-thumb" onerror="this.src='../restaurants/default.jpg'">
+                                    <img src="../Restaurants/<?= htmlspecialchars($row['file_path'] ?? 'default.jpg') ?>"
+                                        class="img-thumb" onerror="this.src='../Restaurants/default.jpg'">
                                 </td>
                                 <td style="font-weight:600;color:var(--txt)"><?= $rname ?></td>
                                 <td><?= $cat_html ?></td>
