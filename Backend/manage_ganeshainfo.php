@@ -22,7 +22,7 @@ if (isset($_POST['add'])) {
         $path    = "../image/" . $new_name;
 
         if (move_uploaded_file($img_tmp, $path)) {
-            $stmt = $conn->prepare("INSERT INTO Ganesha_Info (title_ganesha, content_ganesha, img_ganesha) VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO ganesha_info (title_ganesha, content_ganesha, img_ganesha) VALUES (?, ?, ?)");
             $stmt->bind_param("sss", $title, $content, $new_name);
 
             if ($stmt->execute()) {
@@ -60,7 +60,7 @@ if (isset($_POST['edit'])) {
 
             if (move_uploaded_file($img_tmp, $path)) {
                 // Update with new image
-                $stmt = $conn->prepare("UPDATE Ganesha_Info SET title_ganesha=?, content_ganesha=?, img_ganesha=? WHERE info_id=?");
+                $stmt = $conn->prepare("UPDATE ganesha_info SET title_ganesha=?, content_ganesha=?, img_ganesha=? WHERE info_id=?");
                 $stmt->bind_param("sssi", $title, $content, $new_name, $id);
 
                 if ($stmt->execute()) {
@@ -76,7 +76,7 @@ if (isset($_POST['edit'])) {
             }
         } else {
             // Update without changing image
-            $stmt = $conn->prepare("UPDATE Ganesha_Info SET title_ganesha=?, content_ganesha=? WHERE info_id=?");
+            $stmt = $conn->prepare("UPDATE ganesha_info SET title_ganesha=?, content_ganesha=? WHERE info_id=?");
             $stmt->bind_param("ssi", $title, $content, $id);
 
             if ($stmt->execute()) {
@@ -99,14 +99,14 @@ if (isset($_GET['delete'])) {
         if ($id <= 0) throw new Exception("ID ข้อมูลไม่ถูกต้อง");
 
         // 1. ดึงชื่อไฟล์รูปภาพมาก่อน
-        $s2 = $conn->prepare("SELECT img_ganesha FROM Ganesha_Info WHERE info_id=?");
+        $s2 = $conn->prepare("SELECT img_ganesha FROM ganesha_info WHERE info_id=?");
         $s2->bind_param("i", $id);
         $s2->execute();
         $r2 = $s2->get_result();
         $row2 = $r2->fetch_assoc();
 
         // 2. สั่งลบข้อมูลใน Database
-        $s3 = $conn->prepare("DELETE FROM Ganesha_Info WHERE info_id=?");
+        $s3 = $conn->prepare("DELETE FROM ganesha_info WHERE info_id=?");
         $s3->bind_param("i", $id);
 
         if ($s3->execute()) {
@@ -707,7 +707,7 @@ if (isset($_GET['delete'])) {
                 <tbody>
                     <?php
                     $modals = ''; // ตัวแปรสำหรับเก็บ HTML ของ Edit Modal แต่ละแถว
-                    $result = $conn->query("SELECT * FROM Ganesha_Info ORDER BY info_id DESC");
+                    $result = $conn->query("SELECT * FROM ganesha_info ORDER BY info_id DESC");
                     while ($row = $result->fetch_assoc()):
                     ?>
                         <tr>
