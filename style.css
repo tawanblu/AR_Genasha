@@ -20,6 +20,7 @@ body::before {
 :root {
     --gold: #c9a84c;
     /* สีทองหลักที่ใช้กับตัวหนังสือ */
+    --border: rgba(255, 255, 255, 0.08);
 }
 
 *,
@@ -94,6 +95,29 @@ body::before {
 
 .navbar .nav-link:hover {
     color: #ffc107;
+}
+
+/* โลโก้ในแถบนำทางด้านบน (ไม่ใช่ sidebar หลังบ้าน) */
+.navbar .sidebar-logo {
+    border-bottom: none;
+    padding: 0;
+    margin-right: auto;
+}
+
+.navbar-toggler {
+    border: 1px solid rgba(201, 168, 76, 0.45);
+    padding: 0.35rem 0.55rem;
+    transition: all 0.3s ease;
+}
+
+.navbar-toggler:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+    border-color: #D4AF37;
+}
+
+.navbar-toggler:focus {
+    box-shadow: 0 0 0 0.2rem rgba(201, 168, 76, 0.25);
 }
 
 /* =========================================================
@@ -1197,10 +1221,65 @@ section.container p.fs-3 {
    ========================================================= */
 @media (max-width: 991px) {
 
+    .navbar > .container {
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .navbar .sidebar-logo {
+        padding: 0.25rem 0;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .navbar .sidebar-logo .logo-title {
+        font-size: 1.05rem;
+        letter-spacing: 0.06em;
+    }
+
+    .navbar-toggler {
+        flex-shrink: 0;
+        margin-left: 0.5rem;
+    }
+
+    .navbar .navbar-collapse {
+        flex-basis: 100%;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        margin-top: 0.65rem;
+        padding: 0.35rem 0.75rem 0.85rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .navbar .navbar-nav {
+        gap: 0;
+        width: 100%;
+    }
+
+    .navbar .nav-item {
+        width: 100%;
+    }
+
     .navbar .nav-link {
         margin-right: 0;
         font-size: 1rem;
-        padding: 0.65rem 0.9rem;
+        padding: 0.7rem 0.5rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .navbar .nav-item:last-child,
+    .navbar .nav-item.ms-lg-3 {
+        border-bottom: none;
+    }
+
+    .navbar .nav-item.ms-lg-3 .d-flex {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.5rem 0 0.25rem;
     }
 
     .navbar-brand {
