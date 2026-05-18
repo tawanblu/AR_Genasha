@@ -1083,19 +1083,60 @@ section.container p.fs-3 {
 
 @media (max-width: 700px) {
     .footer-top {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 
-    .footer-col {
+    /* คอลัมน์แรก (Brand + Social) ขยายเต็มแถว */
+    .footer-col:first-child {
+        grid-column: 1 / -1;
+        border-bottom: 1px solid #2a2a2a;
+        padding: 2rem 1.5rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-col:first-child .brand-tagline {
+        margin-bottom: 1.25rem;
+    }
+
+    .footer-col:first-child .social-row {
+        justify-content: center;
+    }
+
+    /* คอลัมน์ Contact & Explore วางเคียงกัน */
+    .footer-col:not(:first-child) {
         border-right: none;
-        border-bottom: 1px solid #1e1e1e;
-        padding: 2rem 1.5rem;
+        border-bottom: none;
+        padding: 1.5rem 1.25rem;
+    }
+
+    .footer-col:nth-child(2) {
+        border-right: 1px solid #1e1e1e;
+    }
+
+    .col-title {
+        font-size: 0.75rem;
+        letter-spacing: 0.25em;
+        margin-bottom: 1rem;
+    }
+
+    .contact-item {
+        font-size: 0.78rem;
+        gap: 0.5rem;
+    }
+
+    .nav-link {
+        font-size: 0.78rem;
+        padding: 0.3rem 0;
     }
 
     .footer-bottom {
         flex-direction: column;
         gap: 0.5rem;
         text-align: center;
+        padding: 1rem 1.5rem;
     }
 
     .p-title-big {
@@ -1203,6 +1244,7 @@ section.container p.fs-3 {
     .p-title-big {
         font-size: 2rem !important;
     }
+
 }
 
 /* =========================================================
@@ -1275,6 +1317,93 @@ section.container p.fs-3 {
         display: none !important;
     }
 
+    /* ===== About Slider Mobile ===== */
+    .intro-section {
+        padding: 2rem 0 !important;
+    }
+
+    .intro-section .swiper-slide .row {
+        flex-direction: column-reverse;
+        gap: 0;
+    }
+
+    .intro-section .col-lg-6.text-white {
+        padding: 1.5rem 1.25rem 1rem !important;
+        text-align: center !important;
+    }
+
+    .intro-section .col-lg-6.text-white h3 {
+        font-size: 1.15rem !important;
+        line-height: 1.55;
+        margin-bottom: 1rem !important;
+        font-weight: 500 !important;
+    }
+
+    .intro-section .col-lg-6.text-white p {
+        font-size: 0.9rem !important;
+        line-height: 1.8 !important;
+        color: rgba(255, 255, 255, 0.78) !important;
+        text-align: left !important;
+    }
+
+    .intro-section .gold-label {
+        font-size: 1.3rem !important;
+        letter-spacing: 4px;
+        display: block;
+        margin-bottom: 0.5rem;
+    }
+
+    .intro-section .gold-btn {
+        margin-top: 1.25rem !important;
+        padding: 10px 36px;
+        font-size: 0.9rem;
+    }
+
+    .intro-section .col-lg-6.text-center {
+        margin-top: 0 !important;
+        padding-top: 1.75rem;
+    }
+
+    .intro-section .image-wrapper {
+        position: relative;
+    }
+
+    .intro-section .image-wrapper::before {
+        content: '';
+        position: absolute;
+        inset: -8px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(212, 175, 55, 0.18) 0%, transparent 70%);
+        z-index: 0;
+    }
+
+    .intro-section .ganesha-img {
+        position: relative;
+        z-index: 1;
+        width: min(72vw, 260px) !important;
+        height: min(72vw, 260px) !important;
+        box-shadow: 0 0 50px rgba(216, 191, 118, 0.55) !important;
+    }
+
+    .intro-section .swiper-pagination {
+        margin-top: 1.25rem !important;
+        position: relative;
+        bottom: unset;
+    }
+
+    .intro-section .swiper-pagination-bullet {
+        background: #c9a84c;
+        opacity: 0.4;
+        width: 8px;
+        height: 8px;
+    }
+
+    .intro-section .swiper-pagination-bullet-active {
+        opacity: 1;
+        width: 22px;
+        border-radius: 4px;
+    }
+
     .feature-section .col-lg-7 {
         padding-left: 15px;
         padding-right: 15px;
@@ -1328,5 +1457,14 @@ section.container p.fs-3 {
 
     .p-title-big {
         font-size: 1.5rem !important;
+    }
+
+    .category-container .filter-btn {
+        flex: 0 0 auto;
+        /* ล็อกขนาดไว้ ไม่ให้ปุ่มโดนบีบจนตัวหนังสือตกบรรทัด */
+        padding: 8px 18px;
+        /* ปรับขนาดพื้นที่ปุ่มให้พอดีกับนิ้วกด */
+        font-size: 0.9rem;
+        /* ปรับขนาดฟอนต์ให้เล็กลงเล็กน้อยเพื่อให้สมส่วน */
     }
 }
