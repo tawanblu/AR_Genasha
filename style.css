@@ -1245,13 +1245,11 @@ section.container p.fs-3 {
     .navbar .navbar-collapse {
         flex-basis: 100%;
         width: 100%;
-        background: rgba(0, 0, 0, 0.92);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
+        background: transparent;
         margin-top: 0.65rem;
         padding: 0.35rem 0.75rem 0.85rem;
         border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border: none;
     }
 
     .navbar .navbar-nav {
@@ -1268,7 +1266,12 @@ section.container p.fs-3 {
         font-size: 1rem;
         padding: 0.7rem 0.5rem;
         text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        border-bottom: none;
+    }
+
+    .navbar .nav-link:hover,
+    .navbar .nav-link:focus {
+        color: #ffc107;
     }
 
     .navbar .nav-item:last-child,

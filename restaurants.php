@@ -104,10 +104,6 @@ $restaurant_categories = ['อาหารตามสั่ง', 'ก๋วย�
             font-family: 'Sarabun', sans-serif;
         }
 
-        .navbar .nav-link {
-            color: #fff !important;
-        }
-
         .page-title {
             color: #D4AF37;
             font-weight: 800;
@@ -126,15 +122,25 @@ $restaurant_categories = ['อาหารตามสั่ง', 'ก๋วย�
             transition: 0.3s;
             white-space: nowrap;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
-        .filter-btn:hover {
-            background-color: #f0f0f0;
-        }
-
-        .filter-btn.active {
+        .filter-btn.active,
+        .filter-btn.active:focus {
             background-color: #D4AF37;
             color: white;
+        }
+
+        @media (hover: hover) {
+            .filter-btn:hover:not(.active) {
+                background-color: #f0f0f0;
+            }
+
+            .filter-btn.active:hover {
+                background-color: #D4AF37;
+                color: white;
+            }
         }
 
         .place-card {
@@ -172,14 +178,23 @@ $restaurant_categories = ['อาหารตามสั่ง', 'ก๋วย�
         .rating-select label {
             cursor: pointer;
             font-size: 1.25rem;
-            color: #444;
+            color: #444 !important;
             transition: color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
-        .rating-select label:hover,
-        .rating-select label:hover~label,
-        .rating-select input:checked~label {
-            color: #D4AF37;
+        .rating-select input:checked+label,
+        .rating-select input:checked~label,
+        .rating-select label.is-lit {
+            color: #D4AF37 !important;
+        }
+
+        @media (hover: hover) {
+            .rating-select label:hover,
+            .rating-select label:hover~label {
+                color: #D4AF37 !important;
+            }
         }
 
         .rating-badge {
@@ -814,7 +829,46 @@ $restaurant_categories = ['อาหารตามสั่ง', 'ก๋วย�
             });
         }
 
+        function initRatingSelect(container) {
+            const labels = container.querySelectorAll('label');
+            const inputs = container.querySelectorAll('input[type="radio"]');
+
+            const getStarValue = (label) => {
+                const id = label.getAttribute('for');
+                const input = id ? document.getElementById(id) : null;
+                return input ? parseInt(input.value, 10) : 0;
+            };
+
+            const setLit = (maxVal) => {
+                labels.forEach((label) => {
+                    label.classList.toggle('is-lit', maxVal > 0 && getStarValue(label) <= maxVal);
+                });
+            };
+
+            const syncFromChecked = () => {
+                const checked = container.querySelector('input:checked');
+                setLit(checked ? parseInt(checked.value, 10) : 0);
+            };
+
+            inputs.forEach((input) => {
+                input.addEventListener('change', syncFromChecked);
+            });
+
+            labels.forEach((label) => {
+                label.addEventListener('mouseenter', () => setLit(getStarValue(label)));
+                label.addEventListener('touchstart', () => setLit(getStarValue(label)), {
+                    passive: true
+                });
+            });
+
+            container.addEventListener('mouseleave', syncFromChecked);
+            container.addEventListener('touchend', syncFromChecked);
+
+            syncFromChecked();
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.rating-select').forEach(initRatingSelect);
             const placeItems = document.querySelectorAll(".place-item");
             const loadMoreBtn = document.getElementById("loadMoreBtn");
             const loadMoreContainer = document.getElementById("loadMoreContainer");
@@ -918,6 +972,14 @@ $restaurant_categories = ['อาหารตามสั่ง', 'ก๋วย�
                     const modalResIdInput = resDetailModal.querySelector('#modal-restaurant-id');
                     if (modalResIdInput) {
                         modalResIdInput.value = id;
+                    }
+
+                    const reviewForm = resDetailModal.querySelector('.review-form');
+                    if (reviewForm) {
+                        reviewForm.reset();
+                        resDetailModal.querySelectorAll('.rating-select label').forEach((label) => {
+                            label.classList.remove('is-lit');
+                        });
                     }
 
                     const carouselInner = resDetailModal.querySelector('#modal-carousel-inner');
