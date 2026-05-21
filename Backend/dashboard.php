@@ -1,12 +1,12 @@
 <?php
 session_start();
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// ini_set('display_errors', 1);        <-- เติม // ข้างหน้า
+// ini_set('display_startup_errors', 1); <-- เติม // ข้างหน้า
+// error_reporting(E_ALL);              <-- เติม // ข้างหน้า
+
 
 require_once("../connect.php");
 /** @var mysqli $conn */
-
 
 if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     echo "<script>alert('คุณไม่มีสิทธิ์เข้าถึงหน้าจัดการระบบ'); window.location.href='../index.php';</script>";
@@ -15,23 +15,88 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
 
 $adminNav = basename($_SERVER['PHP_SELF']);
 
-$userCount       = $conn->query("SELECT COUNT(*) as total FROM accounts")->fetch_assoc()['total'];
-$ganeshaCount    = $conn->query("SELECT COUNT(*) as total FROM ganesha_info")->fetch_assoc()['total'];
-$restaurantCount = $conn->query("SELECT COUNT(*) as total FROM restaurant")->fetch_assoc()['total'];
-$ARLocationCount = $conn->query("SELECT COUNT(*) as total FROM ar_media")->fetch_assoc()['total'];
-$placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->fetch_assoc()['total'];
+function getCount($conn, $sql)
+{
+    $result = $conn->query($sql);
+    if (!$result) {
+        die("เกิดข้อผิดพลาด SQL: " . $conn->error . " | Query: " . $sql);
+    }
+    return $result->fetch_assoc()['total'] ?? 0;
+}
+
+// ฟังก์ชันช่วยดึงข้อมูลแบบปลอดภัย (ถ้าคอลัมน์ไม่มี เว็บจะไม่ล่ม)
+function safeQuery($conn, $sql)
+{
+    $result = $conn->query($sql);
+    if (!$result) return 0;
+    $row = $result->fetch_assoc();
+    return $row ? array_values($row)[0] : 0;
+}
+
+// ข้อมูลหลัก
+$userCount       = safeQuery($conn, "SELECT COUNT(*) FROM accounts");
+$ganeshaCount    = safeQuery($conn, "SELECT COUNT(*) FROM ganesha_info");
+$restaurantCount = safeQuery($conn, "SELECT COUNT(*) FROM restaurant");
+$ARLocationCount = safeQuery($conn, "SELECT COUNT(*) FROM ar_media");
+$placeCount      = safeQuery($conn, "SELECT COUNT(*) FROM nearby_place");
+
+// ข้อมูลรีวิว (รวมทั้งจากตารางร้านอาหารและตารางสถานที่)
+$reviewCount     = safeQuery($conn, "SELECT (SELECT COUNT(*) FROM restaurant_reviews) + (SELECT COUNT(*) FROM nearby_place_reviews)");
+
+// =========================================================================
+// สถิติการใช้งาน AR (Log Access)
+// =========================================================================
+$countARStart = 0;
+$countViewModel = 0;
+$checkTable = $conn->query("SHOW TABLES LIKE 'access_logs'");
+if ($checkTable && $checkTable->num_rows > 0) {
+    $resAR = $conn->query("SELECT COUNT(*) AS total FROM access_logs WHERE action_type = 'ar_start'");
+    if ($resAR) {
+        $countARStart = (int)($resAR->fetch_assoc()['total'] ?? 0);
+    }
+    $resModel = $conn->query("SELECT COUNT(*) AS total FROM access_logs WHERE action_type = 'view_model'");
+    if ($resModel) {
+        $countViewModel = (int)($resModel->fetch_assoc()['total'] ?? 0);
+    }
+}
+
+// --- ดึงร้านอาหารคะแนนสูงสุด (คำนวณจากรีวิวจริง) ---
+$topRestaurant = "ไม่มีข้อมูล";
+$sqlRest = "SELECT r.restaurant_name 
+            FROM restaurant r 
+            LEFT JOIN restaurant_reviews rev ON r.restaurant_id = rev.restaurant_id 
+            GROUP BY r.restaurant_id 
+            ORDER BY AVG(rev.rating_score) DESC, COUNT(rev.review_id) DESC LIMIT 1";
+$resRest = $conn->query($sqlRest);
+if ($resRest && $resRest->num_rows > 0) {
+    $topRestaurant = $resRest->fetch_assoc()['restaurant_name'];
+}
+
+// 2. ดึงสถานที่สุดฮิต (แก้ไขชื่อคอลัมน์ให้ตรงกับฐานข้อมูล)
+$topPlace = "ไม่มีข้อมูล";
+$sqlPlace = "SELECT p.name 
+             FROM nearby_place p 
+             LEFT JOIN nearby_place_reviews r ON p.place_id = r.place_id
+             GROUP BY p.place_id 
+             ORDER BY COUNT(r.review_id) DESC LIMIT 1";
+$resPlace = $conn->query($sqlPlace);
+if ($resPlace && $resPlace->num_rows > 0) {
+    $topPlace = $resPlace->fetch_assoc()['name'];
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <title>AR Ganesha — Admin</title>
+    <title>AR Ganesha | Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         :root {
@@ -538,6 +603,48 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
             --accent: var(--red);
         }
 
+        /* ─── AR stats + chart ─────────────────────────────── */
+        .ar-dashboard-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.4fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .chart-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 22px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-box h5 {
+            margin-bottom: 12px;
+        }
+
+        .chart-box canvas {
+            flex: 1;
+            min-height: 0;
+        }
+
+        @media (max-width: 991px) {
+            .ar-dashboard-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .ar-dashboard-row .chart-box {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .ar-dashboard-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ─── Divider ──────────────────────────────────────── */
         .divider {
             height: 1px;
@@ -589,12 +696,15 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
         .anim-7 {
             animation-delay: .44s;
         }
+
+        .anim-8 {
+            animation-delay: .50s;
+        }
     </style>
 </head>
 
 <body>
 
-    <!-- ═══ SIDEBAR ═══════════════════════════════════════════ -->
     <aside class="sidebar">
         <div class="sidebar-logo">
             <div class="logo-title">AR Ganesha</div>
@@ -611,6 +721,10 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
             <a href="manage_users.php"
                 class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i> Manage Users
+            </a>
+            <a href="report_ganesha.php"
+                class="nav-link <?= $adminNav === 'report_ganesha.php' ? 'active' : '' ?>">
+                <i class="bi bi-file-earmark-bar-graph"></i> Ganesha Report
             </a>
 
             <div class="nav-label">Content</div>
@@ -645,10 +759,8 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
     </aside>
 
 
-    <!-- ═══ MAIN ═══════════════════════════════════════════════ -->
     <main class="main">
 
-        <!-- Top bar -->
         <div class="topbar anim anim-1">
             <div>
                 <div class="page-title">Over<span>view</span></div>
@@ -665,7 +777,6 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
             </div>
         </div>
 
-        <!-- Stat cards -->
         <div class="stats-grid">
             <div class="stat-card c-gold anim anim-1">
                 <div class="stat-icon-wrap"><i class="bi bi-people-fill"></i></div>
@@ -697,9 +808,39 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
                 <div class="stat-number"><?= $placeCount ?></div>
                 <i class="bi bi-geo-alt-fill bg-icon"></i>
             </div>
+            <div class="stat-card c-purple anim anim-6">
+                <div class="stat-icon-wrap"><i class="bi bi-star-fill"></i></div>
+                <div class="stat-label">Total Reviews</div>
+                <div class="stat-number"><?= $reviewCount ?></div>
+                <i class="bi bi-star-fill bg-icon"></i>
+            </div>
         </div>
 
-        <!-- Quick nav -->
+        <div class="section-head anim anim-7">
+            <div class="section-title"><i class="bi bi-phone-fill"></i> AR Usage Statistics</div>
+            <a href="report_ganesha.php" class="btn-view-all">Full Report →</a>
+        </div>
+        <div class="ar-dashboard-row">
+            <div class="stat-card c-blue anim anim-7">
+                <div class="stat-icon-wrap"><i class="bi bi-phone"></i></div>
+                <div class="stat-label">AR Usage</div>
+                <div class="stat-number"><?= number_format($countARStart) ?></div>
+                <i class="bi bi-phone bg-icon"></i>
+            </div>
+            <div class="stat-card c-purple anim anim-7">
+                <div class="stat-icon-wrap"><i class="bi bi-box-seam"></i></div>
+                <div class="stat-label">Model Views</div>
+                <div class="stat-number"><?= number_format($countViewModel) ?></div>
+                <i class="bi bi-box-seam bg-icon"></i>
+            </div>
+            <div class="chart-box anim anim-8">
+                <h5 style="color:var(--gold); font-size:1rem;"><i class="bi bi-pie-chart-fill me-2"></i> สัดส่วนการใช้งาน AR</h5>
+                <div style="height: 200px; width: 100%; position: relative;">
+                    <canvas id="arUsageChart"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div class="section-head anim anim-6">
             <div class="section-title"><i class="bi bi-lightning-charge-fill"></i> Quick Access</div>
         </div>
@@ -736,7 +877,24 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
 
         <div class="divider"></div>
 
-        <!-- Recent users table -->
+        <div class="section-head anim anim-6">
+            <div class="section-title"><i class="bi bi-trophy-fill"></i> Top Rankings</div>
+        </div>
+        <div class="row mb-4">
+            <div class="col-md-6 anim anim-6">
+                <div class="stat-card">
+                    <div class="stat-label">Most Visited Place</div>
+                    <div class="h4" style="color:var(--gold); margin-top:5px;"><?= $topPlace ?></div>
+                </div>
+            </div>
+            <div class="col-md-6 anim anim-6">
+                <div class="stat-card">
+                    <div class="stat-label">Top Rated Restaurant</div>
+                    <div class="h4" style="color:var(--gold); margin-top:5px;"><?= $topRestaurant ?></div>
+                </div>
+            </div>
+        </div>
+
         <div class="section-head anim anim-7">
             <div class="section-title"><i class="bi bi-clock-history"></i> Recent Users</div>
             <a href="manage_users.php" class="btn-view-all">View All →</a>
@@ -777,6 +935,35 @@ $placeCount      = $conn->query("SELECT COUNT(*) as total FROM nearby_place")->f
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const arUsageChartEl = document.getElementById('arUsageChart');
+        if (arUsageChartEl) {
+            new Chart(arUsageChartEl.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['เข้าใช้ AR', 'ดูโมเดล 3D'],
+                    datasets: [{
+                        data: [<?= $countARStart ?>, <?= $countViewModel ?>],
+                        backgroundColor: ['#4d9fff', '#9b72cf'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e8e6f0',
+                                padding: 12
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

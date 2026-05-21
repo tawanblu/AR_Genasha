@@ -44,19 +44,15 @@ if (empty($all_data)) {
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Swiper -->
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
@@ -66,23 +62,19 @@ if (empty($all_data)) {
 
 <body class="home-page" text-white">
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
 
-            <!-- Logo -->
             <div class="sidebar-logo">
                 <div class="logo-title">AR Ganesha</div>
             </div>
 
 
-            <!-- Hamburger -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
                 aria-controls="mainNavbar" aria-expanded="false" aria-label="เปิดเมนู">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <!-- Menu -->
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav ms-auto text-center align-items-lg-center">
                     <li class="nav-item"><a class="nav-link" href="index.php">Home</a></li>
@@ -116,7 +108,6 @@ if (empty($all_data)) {
 
     </nav>
 
-    <!-- ข้อความนอก nav -->
     <section class="container mt-5 pt-5 text-left">
 
         <p class="fw-bold fs-3">
@@ -128,7 +119,7 @@ if (empty($all_data)) {
             ที่ลานสักการะมหาวิทยาลัยศิลปากร วิทยาเขตสารสนเทศเพชรบุรี
         </p>
 
-        <a href="location_ar.html" class="btn btn-ar btn-lg mt-4 px-5 fw-bold">
+        <a href="location_ar.html" class="btn btn-ar btn-lg mt-4 px-5 fw-bold" onclick="logAccess('ar_start')">
             เริ่มต้นใช้งาน AR
         </a>
 
@@ -183,12 +174,10 @@ if (empty($all_data)) {
 
 
 
-    <!-- MODEL -->
     <section class="feature-section py-5 bg-black">
         <div class="container">
             <div class="row align-items-center">
 
-                <!-- LEFT CONTENT -->
                 <div class="col-lg-7 order-2 order-lg-1 text-white">
 
                     <h2 class="feature-title mb-3 fw-light">
@@ -213,7 +202,6 @@ if (empty($all_data)) {
 
                 </div>
 
-                <!-- RIGHT MODEL -->
                 <div class="col-lg-5 order-1 order-lg-2 text-center mb-5 mb-lg-0">
 
                     <div class="model-wrapper">
@@ -228,7 +216,6 @@ if (empty($all_data)) {
         </div>
     </section>
 
-    <!-- ABOUT -->
     <section class="intro-section py-5 bg-black">
         <div class="container position-relative">
 
@@ -237,18 +224,18 @@ if (empty($all_data)) {
 
             <div class="swiper infoSlider">
                 <div class="swiper-wrapper">
-                    <!-- สไลด์เลื่อน ซ้ายขวา / fetch_all() ดึงข้อมูลทั้งหมดในครั้งเดียว-->
                     <?php foreach ($all_data as $row): ?>
                         <div class="swiper-slide">
                             <div class="row align-items-center">
                                 <div class="col-lg-6 text-white text-start">
                                     <h6 class="gold-label">ABOUT</h6>
-                                    <!-- htmlspecialchars() เป็นฟังก์ชันของ PHP ที่ใช้ในการป้องกันการโจมตีแบบ Cross-Site Scripting (XSS) โดยการแปลงตัวอักษรพิเศษในข้อความให้เป็นรูปแบบที่ปลอดภัย เช่น แปลง < เป็น &lt; และ > เป็น &gt; เพื่อไม่ให้โค้ด HTML หรือ JavaScript ที่เป็นอันตรายถูกแทรกเข้ามาในหน้าเว็บ -->
                                     <h3 class="fw-light mb-4"><?= htmlspecialchars($row['title_ganesha']) ?></h3>
                                     <p class="text-light opacity-75 lh-lg">
                                         <?= nl2br(htmlspecialchars($row['content_ganesha'])) ?>
                                     </p>
-                                    <a href="view-model.php?id=<?= $row['info_id'] ?>"
+
+                                    <a href="view-model.php?id=<?= isset($row['info_id']) ? $row['info_id'] : '' ?>"
+                                        onclick="logAccess('view_model', '<?= isset($row['info_id']) ? $row['info_id'] : '' ?>')"
                                         target="_blank"
                                         class="gold-btn mt-3"
                                         style="text-decoration:none; display:inline-block;">
@@ -342,7 +329,6 @@ if (empty($all_data)) {
         </div>
     </section>
 
-    <!-- footer -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Raleway:wght@300;400;500&display=swap');
 
@@ -608,7 +594,6 @@ if (empty($all_data)) {
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/script.js"></script>
 
@@ -685,6 +670,22 @@ if (empty($all_data)) {
             </div>
         </div>
     </div>
+
+    <script>
+        // ฟังก์ชันสำหรับส่งข้อมูลสถิติไปยังไฟล์ log_access.php โดยไม่รีเฟรชหน้าเว็บ
+        function logAccess(action, id = null) {
+            let formData = new FormData();
+            formData.append('action', action);
+            if (id) {
+                formData.append('id', id);
+            }
+
+            fetch('log_access.php', {
+                method: 'POST',
+                body: formData
+            }).catch(error => console.error('Error logging access:', error));
+        }
+    </script>
 </body>
 
 </html>

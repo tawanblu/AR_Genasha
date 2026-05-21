@@ -3,7 +3,6 @@ session_start();
 require_once("../connect.php");
 /** @var mysqli $conn */
 
-
 // 1. ตรวจสอบสิทธิ์การเข้าใช้งาน (ต้องเป็น Admin เท่านั้น) 🔐
 if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     echo "<script>
@@ -13,18 +12,42 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
     exit();
 }
 
+// ─── ฟังก์ชันช่วยเหลือสำหรับแสดง SweetAlert2 ───
+function alertSuccess($msg, $redirect)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'success', title: 'สำเร็จ!', text: '$msg', confirmButtonColor: '#c9a84c'}).then(() => { window.location.href='$redirect'; });
+        });
+    </script></body></html>";
+    exit();
+}
+function alertError($msg)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'error', title: 'ข้อผิดพลาด!', text: '$msg', confirmButtonColor: '#e05a5a'}).then(() => { history.back(); });
+        });
+    </script></body></html>";
+    exit();
+}
+
 // ----------------- DELETE DATA -----------------
 if (isset($_GET['delete_place'])) {
     $id = intval($_GET['delete_place']);
-    $conn->query("DELETE FROM nearby_place_reviews WHERE review_id = $id");
-    header("Location: manage_reviews.php?del=1");
-    exit();
+    if ($conn->query("DELETE FROM nearby_place_reviews WHERE review_id = $id")) {
+        alertSuccess('ลบรีวิวสถานที่สำเร็จ', 'manage_reviews.php');
+    } else {
+        alertError('ไม่สามารถลบรีวิวได้: ' . $conn->error);
+    }
 }
 if (isset($_GET['delete_rest'])) {
     $id = intval($_GET['delete_rest']);
-    $conn->query("DELETE FROM restaurant_reviews WHERE review_id = $id");
-    header("Location: manage_reviews.php?del=1");
-    exit();
+    if ($conn->query("DELETE FROM restaurant_reviews WHERE review_id = $id")) {
+        alertSuccess('ลบรีวิวร้านอาหารสำเร็จ', 'manage_reviews.php');
+    } else {
+        alertError('ไม่สามารถลบรีวิวได้: ' . $conn->error);
+    }
 }
 
 $res_place = $conn->query("SELECT r.*, p.name AS target_name, a.username FROM nearby_place_reviews r JOIN nearby_place p ON r.place_id=p.place_id JOIN accounts a ON r.id_account=a.id_account ORDER BY r.created_at DESC");
@@ -49,18 +72,20 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 
 <head>
     <meta charset="UTF-8">
-    <title>รีวิว — AR Ganesha Admin</title>
+    <title>reviews | AR Ganesha Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         :root {
             --gold: #c9a84c;
             --gold-lt: #e8c97a;
             --gold-dim: rgba(201, 168, 76, .12);
-            --gold-glow: rgba(201, 168, 76, .22);
             --dark: #0e0e12;
             --panel: #16161e;
             --card: #1e1e2a;
@@ -72,16 +97,9 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             --txt-3: #7a7a96;
             --red: #e05a5a;
             --red-dim: rgba(224, 90, 90, .12);
-            --teal: #38c9a0;
-            --blue: #4d9fff;
-            --blue-dim: rgba(77, 159, 255, .12);
             --purple: #9b72cf;
-            --surface-1: var(--panel);
-            --surface-2: var(--card);
             --surface-3: #252532;
             --sidebar-w: 260px;
-            --radius: 14px;
-            --radius-sm: 8px;
         }
 
         *,
@@ -224,7 +242,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             z-index: 1100;
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
+            border-radius: 8px;
             width: 40px;
             height: 40px;
             align-items: center;
@@ -241,6 +259,42 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             background: rgba(0, 0, 0, .6);
             z-index: 999;
             backdrop-filter: blur(2px)
+        }
+
+        @media(max-width:768px) {
+            .sidebar {
+                transform: translateX(-100%)
+            }
+
+            .sidebar.open {
+                transform: translateX(0)
+            }
+
+            .sb-overlay.open {
+                display: block
+            }
+
+            .mobile-toggle {
+                display: flex
+            }
+
+            .main {
+                margin-left: 0;
+                padding: 24px 18px 50px
+            }
+
+            .topbar {
+                margin-top: 50px
+            }
+
+            .tab-nav {
+                width: 100%
+            }
+
+            .tab-btn {
+                flex: 1;
+                justify-content: center
+            }
         }
 
         .main {
@@ -277,29 +331,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 
         .page-title span {
             color: var(--gold)
-        }
-
-        .breadcrumb-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: .72rem;
-            color: var(--muted);
-            margin-top: 7px
-        }
-
-        .breadcrumb-bar a {
-            color: var(--muted);
-            text-decoration: none;
-            transition: color .14s
-        }
-
-        .breadcrumb-bar a:hover {
-            color: var(--gold)
-        }
-
-        .breadcrumb-bar .sep {
-            opacity: .4
         }
 
         .user-pill {
@@ -395,7 +426,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             color: var(--gold)
         }
 
-        /* Tab content */
         .tab-pane-custom {
             display: none
         }
@@ -546,51 +576,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             opacity: .3
         }
 
-        .toast-container-custom {
-            position: fixed;
-            top: 20px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px
-        }
-
-        .toast-custom {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--border-dim);
-            border-radius: var(--radius);
-            padding: 13px 18px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
-            font-size: .83rem;
-            color: var(--txt);
-            animation: slideIn .3s ease both;
-            min-width: 260px
-        }
-
-        .toast-custom.success {
-            border-left: 3px solid var(--teal)
-        }
-
-        .toast-custom.success i {
-            color: var(--teal)
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(16px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0)
-            }
-        }
-
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -602,57 +587,10 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 transform: translateY(0)
             }
         }
-
-        @media(max-width:768px) {
-            .sidebar {
-                transform: translateX(-100%)
-            }
-
-            .sidebar.open {
-                transform: translateX(0)
-            }
-
-            .sb-overlay.open {
-                display: block
-            }
-
-            .mobile-toggle {
-                display: flex
-            }
-
-            .main {
-                margin-left: 0;
-                padding: 24px 18px 50px
-            }
-
-            .topbar {
-                margin-top: 50px
-            }
-
-            .tab-nav {
-                width: 100%
-            }
-
-            .tab-btn {
-                flex: 1;
-                justify-content: center
-            }
-        }
     </style>
 </head>
 
 <body>
-
-    <?php if (isset($_GET['del'])): ?>
-        <div class="toast-container-custom">
-            <div class="toast-custom success"><i class="bi bi-trash-fill"></i><span>ลบรีวิวแล้ว</span></div>
-        </div>
-        <script>
-            setTimeout(() => {
-                document.querySelector('.toast-custom')?.remove()
-            }, 3000)
-        </script>
-    <?php endif; ?>
 
     <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="เมนู"><i class="bi bi-list"></i></button>
     <div class="sb-overlay" id="sbOverlay"></div>
@@ -664,14 +602,34 @@ $adminNav = basename($_SERVER['PHP_SELF']);
         </div>
         <nav class="sidebar-nav">
             <div class="nav-label">Main</div>
-            <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>"><i class="bi bi-people-fill"></i> Manage Users</a>
+
+            <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+            <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i> Manage Users
+            </a>
+            <a href="report_ganesha.php" class="nav-link <?= $adminNav === 'report_ganesha.php' ? 'active' : '' ?>">
+                <i class="bi bi-file-earmark-bar-graph"></i> Ganesha Report
+            </a>
+
             <div class="nav-label">Content</div>
-            <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>"><i class="bi bi-bank2"></i> Ganesha Info</a>
-            <a href="manage_ar_media.php" class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>"><i class="bi bi-camera-fill"></i> AR Media</a>
-            <a href="manage_restaurant.php" class="nav-link <?= $adminNav === 'manage_restaurant.php' ? 'active' : '' ?>"><i class="bi bi-shop"></i> Restaurants</a>
-            <a href="manage_places.php" class="nav-link <?= $adminNav === 'manage_places.php' ? 'active' : '' ?>"><i class="bi bi-geo-alt-fill"></i> Places</a>
-            <a href="manage_reviews.php" class="nav-link <?= $adminNav === 'manage_reviews.php' ? 'active' : '' ?>"><i class="bi bi-star-fill"></i> Reviews</a>
+
+            <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>">
+                <i class="bi bi-bank2"></i> Ganesha Info
+            </a>
+            <a href="manage_ar_media.php" class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>">
+                <i class="bi bi-camera-fill"></i> AR Media
+            </a>
+            <a href="manage_restaurant.php" class="nav-link <?= $adminNav === 'manage_restaurant.php' ? 'active' : '' ?>">
+                <i class="bi bi-shop"></i> Restaurants
+            </a>
+            <a href="manage_places.php" class="nav-link <?= $adminNav === 'manage_places.php' ? 'active' : '' ?>">
+                <i class="bi bi-geo-alt-fill"></i> Places
+            </a>
+            <a href="manage_reviews.php" class="nav-link <?= $adminNav === 'manage_reviews.php' ? 'active' : '' ?>">
+                <i class="bi bi-star-fill"></i> Reviews
+            </a>
         </nav>
         <div class="sidebar-footer">
             <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
@@ -691,8 +649,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             <div class="topbar-right">
                 <div class="time-badge"><i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i> Live</div>
                 <div class="user-pill">
-                    <div class="avatar"><?= strtoupper(substr($_SESSION['username'], 0, 1)) ?></div>
-                    <span class="name"><?= htmlspecialchars($_SESSION['username']) ?></span>
+                    <div class="avatar"><?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?></div>
+                    <span class="name"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></span>
                 </div>
             </div>
         </div>
@@ -736,7 +694,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                                     </td>
                                     <td class="time-txt"><?= date('d M Y', strtotime($row['created_at'])) ?><br><span style="opacity:.6"><?= date('H:i', strtotime($row['created_at'])) ?></span></td>
                                     <td style="text-align:center">
-                                        <a href="?delete_place=<?= $row['review_id'] ?>" class="btn-del" onclick="return confirm('ลบรีวิวนี้?')"><i class="bi bi-trash"></i> ลบ</a>
+                                        <button class="btn-del" onclick="confirmDeletePlace(<?= $row['review_id'] ?>)"><i class="bi bi-trash"></i> ลบ</button>
                                     </td>
                                 </tr>
                             <?php endwhile;
@@ -784,7 +742,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                                     </td>
                                     <td class="time-txt"><?= date('d M Y', strtotime($row['created_at'])) ?><br><span style="opacity:.6"><?= date('H:i', strtotime($row['created_at'])) ?></span></td>
                                     <td style="text-align:center">
-                                        <a href="?delete_rest=<?= $row['review_id'] ?>" class="btn-del" onclick="return confirm('ลบรีวิวนี้?')"><i class="bi bi-trash"></i> ลบ</a>
+                                        <button class="btn-del" onclick="confirmDeleteRest(<?= $row['review_id'] ?>)"><i class="bi bi-trash"></i> ลบ</button>
                                     </td>
                                 </tr>
                             <?php endwhile;
@@ -803,8 +761,9 @@ $adminNav = basename($_SERVER['PHP_SELF']);
         </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Custom tab switching (no Bootstrap pills needed)
+        // Custom tab switching 
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -813,19 +772,62 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
             });
         });
+
+        // Sidebar Toggle
         const toggle = document.getElementById('sidebarToggle'),
             sidebar = document.getElementById('sidebar'),
             overlay = document.getElementById('sbOverlay');
-        toggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-            overlay.classList.toggle('open')
-        });
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            overlay.classList.remove('open')
-        });
+
+        if (toggle && sidebar && overlay) {
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open')
+            });
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open')
+            });
+        }
+
+        // ─── ยืนยันการลบรีวิวด้วย SweetAlert2 ───
+        function confirmDeletePlace(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบรีวิวนี้?',
+                text: "หากลบแล้วจะไม่สามารถกู้คืนได้!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e05a5a',
+                cancelButtonColor: '#474761',
+                confirmButtonText: 'ลบรีวิว',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1e1e2a',
+                color: '#e8e6f0'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `?delete_place=${id}`;
+                }
+            });
+        }
+
+        function confirmDeleteRest(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบรีวิวนี้?',
+                text: "หากลบแล้วจะไม่สามารถกู้คืนได้!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e05a5a',
+                cancelButtonColor: '#474761',
+                confirmButtonText: 'ลบรีวิว',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1e1e2a',
+                color: '#e8e6f0'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `?delete_rest=${id}`;
+                }
+            });
+        }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

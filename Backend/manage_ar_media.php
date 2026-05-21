@@ -12,6 +12,26 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
     exit();
 }
 
+// ─── ฟังก์ชันช่วยเหลือสำหรับแสดง SweetAlert2 ───
+function alertSuccess($msg, $redirect)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'success', title: 'สำเร็จ!', text: '$msg', confirmButtonColor: '#c9a84c'}).then(() => { window.location.href='$redirect'; });
+        });
+    </script></body></html>";
+    exit();
+}
+function alertError($msg)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'error', title: 'ข้อผิดพลาด!', text: '$msg', confirmButtonColor: '#e05a5a'}).then(() => { history.back(); });
+        });
+    </script></body></html>";
+    exit();
+}
+
 // ----------------- ADD AR MEDIA -----------------
 if (isset($_POST['add_media'])) {
     $media_type       = $_POST['media_type'];
@@ -25,7 +45,14 @@ if (isset($_POST['add_media'])) {
         if (!empty($_FILES["file_upload"]["name"])) {
             $filename = $_FILES["file_upload"]["name"];
             $tempname = $_FILES["file_upload"]["tmp_name"];
-            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            // ดักนามสกุลไฟล์ 3D
+            $allowed_models = ['glb', 'usdz'];
+            if (!in_array($ext, $allowed_models)) {
+                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์ 3D Model (.glb, .usdz) เท่านั้น");
+            }
+
             $new_filename = time() . "_model_" . rand(1000, 9999) . "." . $ext;
             $target_dir = "../model/";
 
@@ -42,7 +69,14 @@ if (isset($_POST['add_media'])) {
         if (!empty($_FILES["audio_upload"]["name"])) {
             $filename = $_FILES["audio_upload"]["name"];
             $tempname = $_FILES["audio_upload"]["tmp_name"];
-            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            // ดักนามสกุลไฟล์เสียง
+            $allowed_audio = ['mp3', 'wav', 'mpeg'];
+            if (!in_array($ext, $allowed_audio)) {
+                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์เสียง (.mp3, .wav) เท่านั้น");
+            }
+
             $new_filename = time() . "_audio_" . rand(1000, 9999) . "." . $ext;
             $target_dir = "../audio/";
 
@@ -61,15 +95,13 @@ if (isset($_POST['add_media'])) {
         $stmt->bind_param("isss", $info_id, $db_path, $db_audio_path, $media_type);
 
         if ($stmt->execute()) {
-            echo "<script>alert('บันทึกสื่อ AR สำเร็จ'); window.location.href='manage_ar_media.php';</script>";
+            alertSuccess('บันทึกข้อมูลสื่อ AR ใหม่เข้าระบบสำเร็จ', 'manage_ar_media.php');
         } else {
             throw new Exception($stmt->error);
         }
     } catch (Exception $e) {
-        $error_msg = addslashes($e->getMessage());
-        echo "<script>alert('เกิดข้อผิดพลาด:\\n{$error_msg}'); history.back();</script>";
+        alertError($e->getMessage());
     }
-    exit();
 }
 
 // ----------------- EDIT AR MEDIA -----------------
@@ -93,7 +125,13 @@ if (isset($_POST['edit_media'])) {
         if (!empty($_FILES["edit_file_upload"]["name"])) {
             $filename = $_FILES["edit_file_upload"]["name"];
             $tempname = $_FILES["edit_file_upload"]["tmp_name"];
-            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            $allowed_models = ['glb', 'usdz'];
+            if (!in_array($ext, $allowed_models)) {
+                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์ 3D Model (.glb, .usdz) เท่านั้น");
+            }
+
             $new_filename = time() . "_model_" . rand(1000, 9999) . "." . $ext;
             $target_dir = "../model/";
 
@@ -111,7 +149,13 @@ if (isset($_POST['edit_media'])) {
         if (!empty($_FILES["edit_audio_upload"]["name"])) {
             $filename = $_FILES["edit_audio_upload"]["name"];
             $tempname = $_FILES["edit_audio_upload"]["tmp_name"];
-            $ext = pathinfo($filename, PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+            $allowed_audio = ['mp3', 'wav', 'mpeg'];
+            if (!in_array($ext, $allowed_audio)) {
+                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์เสียง (.mp3, .wav) เท่านั้น");
+            }
+
             $new_filename = time() . "_audio_" . rand(1000, 9999) . "." . $ext;
             $target_dir = "../audio/";
 
@@ -131,15 +175,13 @@ if (isset($_POST['edit_media'])) {
         $stmt->bind_param("isssi", $info_id, $db_path, $db_audio_path, $media_type, $media_id);
 
         if ($stmt->execute()) {
-            echo "<script>alert('แก้ไขข้อมูลสื่อ AR สำเร็จ'); window.location.href='manage_ar_media.php';</script>";
+            alertSuccess('แก้ไขข้อมูลสื่อ AR สำเร็จ', 'manage_ar_media.php');
         } else {
             throw new Exception($stmt->error);
         }
     } catch (Exception $e) {
-        $error_msg = addslashes($e->getMessage());
-        echo "<script>alert('เกิดข้อผิดพลาด:\\n{$error_msg}'); history.back();</script>";
+        alertError($e->getMessage());
     }
-    exit();
 }
 
 // ----------------- DELETE AR MEDIA -----------------
@@ -147,19 +189,15 @@ if (isset($_GET['delete'])) {
     $id  = intval($_GET['delete']);
 
     if ($id <= 0) {
-        echo "<script>alert('เกิดข้อผิดพลาด: ไม่พบ ID ของข้อมูลที่ต้องการลบ'); window.location.href='manage_ar_media.php';</script>";
-        exit();
+        alertError('เกิดข้อผิดพลาด: ไม่พบ ID ของข้อมูลที่ต้องการลบ');
     }
 
-    // ดึงชื่อไฟล์มาก่อน
     $res = $conn->query("SELECT file_path, audio_file FROM ar_media WHERE media_id = $id");
     $data = $res ? $res->fetch_assoc() : null;
 
-    // สั่งลบข้อมูลในฐานข้อมูล
     $sql = "DELETE FROM ar_media WHERE media_id = $id";
 
     if ($conn->query($sql) === TRUE) {
-        // ถ้าลบใน DB สำเร็จ ค่อยลบไฟล์ทิ้ง
         if ($data) {
             if (!empty($data['file_path']) && file_exists("../" . $data['file_path'])) {
                 @unlink("../" . $data['file_path']);
@@ -168,12 +206,10 @@ if (isset($_GET['delete'])) {
                 @unlink("../" . $data['audio_file']);
             }
         }
-        echo "<script>alert('ลบข้อมูลสื่อ AR สำเร็จ'); window.location.href='manage_ar_media.php';</script>";
+        alertSuccess('ลบข้อมูลสื่อ AR ออกจากระบบสำเร็จ', 'manage_ar_media.php');
     } else {
-        $error_msg = addslashes($conn->error);
-        echo "<script>alert('ไม่สามารถลบข้อมูลได้!\\nสาเหตุ: " . $error_msg . "'); window.location.href='manage_ar_media.php';</script>";
+        alertError("ไม่สามารถลบข้อมูลได้! สาเหตุ: " . addslashes($conn->error));
     }
-    exit();
 }
 
 $result = $conn->query("SELECT * FROM ar_media ORDER BY media_id DESC");
@@ -190,6 +226,9 @@ $adminNav = basename($_SERVER['PHP_SELF']);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         :root {
             --gold: #c9a84c;
@@ -233,7 +272,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             display: flex;
             flex-direction: column;
             z-index: 1000;
-            overflow: hidden
+            overflow: hidden;
+            transition: transform .28s ease;
         }
 
         .sidebar::before {
@@ -335,6 +375,61 @@ $adminNav = basename($_SERVER['PHP_SELF']);
         .nav-link.logout:hover {
             color: var(--red);
             background: rgba(224, 90, 90, .08)
+        }
+
+        /* Mobile Responsive */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 1100;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            cursor: pointer;
+            font-size: 1.1rem
+        }
+
+        .sb-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            z-index: 999;
+            backdrop-filter: blur(2px)
+        }
+
+        @media(max-width:768px) {
+            .sidebar {
+                transform: translateX(-100%)
+            }
+
+            .sidebar.open {
+                transform: translateX(0)
+            }
+
+            .sb-overlay.open {
+                display: block
+            }
+
+            .mobile-toggle {
+                display: flex
+            }
+
+            .main {
+                margin-left: 0 !important;
+                padding: 24px 18px 50px !important;
+            }
+
+            .topbar {
+                margin-top: 40px
+            }
         }
 
         .main {
@@ -580,6 +675,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             color: #fff
         }
 
+        /* Modal styling */
         .modal-content {
             background: var(--panel);
             border: 1px solid var(--border);
@@ -710,21 +806,52 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 
 <body>
 
-    <aside class="sidebar">
+    <button type="button" class="mobile-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+    <div class="sb-overlay" id="sbOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
             <div class="logo-title">AR Ganesha</div>
             <div class="logo-sub">Admin Console</div>
         </div>
         <nav class="sidebar-nav">
             <div class="nav-label">Main</div>
-            <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>"><i class="bi bi-people-fill"></i> Manage Users</a>
+
+            <a href="dashboard.php"
+                class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+            <a href="manage_users.php"
+                class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>">
+                <i class="bi bi-people-fill"></i> Manage Users
+            </a>
+            <a href="report_ganesha.php"
+                class="nav-link <?= $adminNav === 'report_ganesha.php' ? 'active' : '' ?>">
+                <i class="bi bi-file-earmark-bar-graph"></i> Ganesha Report
+            </a>
+
             <div class="nav-label">Content</div>
-            <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>"><i class="bi bi-bank2"></i> Ganesha Info</a>
-            <a href="manage_ar_media.php" class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>"><i class="bi bi-camera-fill"></i> AR Media</a>
-            <a href="manage_restaurant.php" class="nav-link <?= $adminNav === 'manage_restaurant.php' ? 'active' : '' ?>"><i class="bi bi-shop"></i> Restaurants</a>
-            <a href="manage_places.php" class="nav-link <?= $adminNav === 'manage_places.php' ? 'active' : '' ?>"><i class="bi bi-geo-alt-fill"></i> Places</a>
-            <a href="manage_reviews.php" class="nav-link <?= $adminNav === 'manage_reviews.php' ? 'active' : '' ?>"><i class="bi bi-star-fill"></i> Reviews</a>
+
+            <a href="manage_ganeshainfo.php"
+                class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>">
+                <i class="bi bi-bank2"></i> Ganesha Info
+            </a>
+            <a href="manage_ar_media.php"
+                class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>">
+                <i class="bi bi-camera-fill"></i> AR Media
+            </a>
+            <a href="manage_restaurant.php"
+                class="nav-link <?= $adminNav === 'manage_restaurant.php' ? 'active' : '' ?>">
+                <i class="bi bi-shop"></i> Restaurants
+            </a>
+            <a href="manage_places.php"
+                class="nav-link <?= $adminNav === 'manage_places.php' ? 'active' : '' ?>">
+                <i class="bi bi-geo-alt-fill"></i> Places
+            </a>
+            <a href="manage_reviews.php"
+                class="nav-link <?= $adminNav === 'manage_reviews.php' ? 'active' : '' ?>">
+                <i class="bi bi-star-fill"></i> Reviews
+            </a>
         </nav>
         <div class="sidebar-footer">
             <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
@@ -744,8 +871,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 <div class="topbar-right">
                     <div class="time-badge"><i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i> Live</div>
                     <div class="user-pill">
-                        <div class="avatar"><?= strtoupper(substr($_SESSION['username'], 0, 1)) ?></div>
-                        <span class="name"><?= htmlspecialchars($_SESSION['username']) ?></span>
+                        <div class="avatar"><?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?></div>
+                        <span class="name"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></span>
                     </div>
                 </div>
             </div>
@@ -800,10 +927,9 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                                         <i class="bi bi-pencil-square"></i> แก้ไข
                                     </button>
 
-                                    <a href="?delete=<?= $row['media_id'] ?>" class="btn-del"
-                                        onclick="return confirm('ต้องการลบไฟล์สื่อนี้ใช่หรือไม่? ไฟล์ที่เกี่ยวข้องจะถูกลบทิ้งทั้งหมด')">
+                                    <button class="btn-del" onclick="confirmDelete(<?= $row['media_id'] ?>)">
                                         <i class="bi bi-trash"></i> ลบ
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -847,7 +973,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                         </label>
                         <input type="file" name="audio_upload" id="audio_upload" class="form-control" accept="audio/mp3, audio/wav, audio/mpeg">
                     </div>
-
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" data-bs-dismiss="modal">ปิด</button>
@@ -895,7 +1020,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                         <label class="form-label text-success">เปลี่ยนไฟล์เสียงใหม่</label>
                         <input type="file" name="edit_audio_upload" id="edit_audio_upload" class="form-control" accept="audio/mp3, audio/wav, audio/mpeg">
                     </div>
-
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" data-bs-dismiss="modal">ปิด</button>
@@ -909,6 +1033,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // ─── การจัดการแสดงผลฟิลด์อัปโหลดตามประเภทสื่อ ───
         function toggleUploadFields() {
             const mediaType = document.getElementById('media_type').value;
             const modelGroup = document.getElementById('model_upload_group');
@@ -942,25 +1067,21 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             }
         }
 
+        // ─── กำหนดค่าลงฟอร์มเมื่อกดแก้ไข ───
         const editModal = document.getElementById('editModal');
         if (editModal) {
             editModal.addEventListener('show.bs.modal', event => {
                 const button = event.relatedTarget;
-                const id = button.getAttribute('data-id');
-                const info = button.getAttribute('data-info');
-                const type = button.getAttribute('data-type');
-
-                document.getElementById('edit_media_id').value = id;
-                document.getElementById('edit_info_id').value = info;
-                document.getElementById('edit_media_type').value = type;
-
+                document.getElementById('edit_media_id').value = button.getAttribute('data-id');
+                document.getElementById('edit_info_id').value = button.getAttribute('data-info');
+                document.getElementById('edit_media_type').value = button.getAttribute('data-type');
                 toggleEditFields();
             });
         }
 
+        // ─── ตรวจสอบขนาดไฟล์ (Frontend Limit) ───
         document.addEventListener('DOMContentLoaded', () => {
             toggleUploadFields();
-
             const maxFileSizeMB = 40;
             const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
 
@@ -968,10 +1089,14 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 const fileInput = event.target;
                 if (fileInput.files.length > 0) {
                     const fileSize = fileInput.files[0].size;
-
                     if (fileSize > maxFileSizeBytes) {
                         const actualSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
-                        alert(`⚠️ ไฟล์มีขนาดใหญ่เกินไป!\n\nขนาดไฟล์ของคุณ: ${actualSizeMB} MB\nจำกัดไม่เกิน: ${maxFileSizeMB} MB\n\nกรุณาเลือกไฟล์ใหม่ครับ`);
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ไฟล์ใหญ่เกินไป!',
+                            text: `ขนาดไฟล์ของคุณ: ${actualSizeMB} MB (จำกัดไม่เกิน: ${maxFileSizeMB} MB) กรุณาเลือกไฟล์ใหม่ครับ`,
+                            confirmButtonColor: '#e8c97a'
+                        });
                         fileInput.value = '';
                     }
                 }
@@ -984,7 +1109,54 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                     inputElement.addEventListener('change', validateFileSize);
                 }
             });
+
+            // ─── เพิ่ม Loading Spinner เวลาส่งฟอร์ม ───
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const btnSave = this.querySelector('.btn-save');
+                    if (btnSave) {
+                        btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> กำลังบันทึก...';
+                        btnSave.style.pointerEvents = 'none'; // ป้องกันกดเบิ้ล
+                    }
+                });
+            });
         });
+
+        // ─── การเปิดปิดเมนูสำหรับมือถือ (Mobile Sidebar) ───
+        const toggle = document.getElementById('sidebarToggle'),
+            sidebar = document.getElementById('sidebar'),
+            overlay = document.getElementById('sbOverlay');
+
+        if (toggle && sidebar && overlay) {
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open')
+            });
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open')
+            });
+        }
+
+        // ─── SweetAlert สำหรับการกดยืนยันลบข้อมูล ───
+        function confirmDelete(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบ?',
+                text: "ข้อมูลสื่อและไฟล์ที่เกี่ยวข้องจะถูกลบทิ้งอย่างถาวร!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e05a5a',
+                cancelButtonColor: '#474761',
+                confirmButtonText: 'ใช่, ลบเลย!',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1e1e2a',
+                color: '#e8e6f0'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `?delete=${id}`;
+                }
+            });
+        }
     </script>
 </body>
 

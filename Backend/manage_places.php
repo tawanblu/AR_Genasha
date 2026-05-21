@@ -14,30 +14,54 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
 
 $place_categories = ["วัด", "คาเฟ่", "ร้านอาหาร", "ธรรมชาติ", "พิพิธภัณฑ์", "อื่นๆ"];
 
+// ─── ฟังก์ชันช่วยเหลือสำหรับแสดง SweetAlert2 ───
+function alertSuccess($msg, $redirect)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'success', title: 'สำเร็จ!', text: '$msg', confirmButtonColor: '#c9a84c'}).then(() => { window.location.href='$redirect'; });
+        });
+    </script></body></html>";
+    exit();
+}
+function alertError($msg)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'error', title: 'ข้อผิดพลาด!', text: '$msg', confirmButtonColor: '#e05a5a'}).then(() => { history.back(); });
+        });
+    </script></body></html>";
+    exit();
+}
+
 // ----------------- ADD DATA (MULTIPLE IMAGES) -----------------
 if (isset($_POST['add_place'])) {
     $name       = $_POST['name'];
     $category   = isset($_POST['category']) ? implode(", ", $_POST['category']) : "";
     $detail     = $_POST['detail'];
     $map_url    = $_POST['map_url'];
-    $phone      = $_POST['phone_number']; // เพิ่มการรับค่าเบอร์โทร
+    $phone      = $_POST['phone_number'];
     $open_time  = $_POST['open_time'];
     $close_time = $_POST['close_time'];
 
-    // เพิ่ม phone_number เข้าไปในคำสั่ง INSERT
     $stmt = $conn->prepare("INSERT INTO nearby_place (name, category, detail, map_url, phone_number, open_time, close_time) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("sssssss", $name, $category, $detail, $map_url, $phone, $open_time, $close_time);
 
     if ($stmt->execute()) {
         $pid = $stmt->insert_id;
 
-        // จัดการอัปโหลดหลายรูปภาพ
+        // จัดการอัปโหลดหลายรูปภาพ พร้อมตรวจสอบนามสกุลไฟล์
         if (!empty($_FILES['place_imgs']['name'][0])) {
             $si = $conn->prepare("INSERT INTO nearby_place_image (place_id, file_path) VALUES (?, ?)");
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
             foreach ($_FILES['place_imgs']['name'] as $key => $filename) {
                 $tempname = $_FILES['place_imgs']['tmp_name'][$key];
-                $ext = pathinfo($filename, PATHINFO_EXTENSION);
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                // ข้ามไฟล์ถ้านามสกุลไม่ถูกต้อง
+                if (!in_array($ext, $allowed_ext)) continue;
+
                 $new_filename = time() . "_" . rand(1000, 9999) . "_" . $key . "." . $ext;
 
                 if (move_uploaded_file($tempname, "../Place/" . $new_filename)) {
@@ -46,9 +70,9 @@ if (isset($_POST['add_place'])) {
                 }
             }
         }
-
-        echo "<script>alert('เพิ่มสถานที่และรูปภาพสำเร็จ'); window.location.href='manage_places.php';</script>";
-        exit();
+        alertSuccess('เพิ่มสถานที่และรูปภาพสำเร็จ', 'manage_places.php');
+    } else {
+        alertError('ไม่สามารถเพิ่มข้อมูลได้: ' . $conn->error);
     }
 }
 
@@ -59,21 +83,24 @@ if (isset($_POST['edit_place'])) {
     $category   = isset($_POST['category']) ? implode(", ", $_POST['category']) : "";
     $detail     = $_POST['detail'];
     $map_url    = $_POST['map_url'];
-    $phone      = $_POST['phone_number']; // เพิ่มการรับค่าเบอร์โทร
+    $phone      = $_POST['phone_number'];
     $open_time  = $_POST['open_time'];
     $close_time = $_POST['close_time'];
 
-    // เพิ่ม phone_number เข้าไปในคำสั่ง UPDATE
     $stmt = $conn->prepare("UPDATE nearby_place SET name=?, category=?, detail=?, map_url=?, phone_number=?, open_time=?, close_time=? WHERE place_id=?");
     $stmt->bind_param("sssssssi", $name, $category, $detail, $map_url, $phone, $open_time, $close_time, $place_id);
 
     if ($stmt->execute()) {
         if (!empty($_FILES['place_imgs']['name'][0])) {
             $si = $conn->prepare("INSERT INTO nearby_place_image (place_id, file_path) VALUES (?, ?)");
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
             foreach ($_FILES['place_imgs']['name'] as $key => $filename) {
                 $tempname = $_FILES['place_imgs']['tmp_name'][$key];
-                $ext = pathinfo($filename, PATHINFO_EXTENSION);
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                if (!in_array($ext, $allowed_ext)) continue;
+
                 $new_filename = time() . "_" . rand(1000, 9999) . "_" . $key . "." . $ext;
 
                 if (move_uploaded_file($tempname, "../Place/" . $new_filename)) {
@@ -82,8 +109,9 @@ if (isset($_POST['edit_place'])) {
                 }
             }
         }
-        echo "<script>alert('แก้ไขข้อมูลสำเร็จ'); window.location.href='manage_places.php';</script>";
-        exit();
+        alertSuccess('แก้ไขข้อมูลสถานที่สำเร็จ', 'manage_places.php');
+    } else {
+        alertError('ไม่สามารถแก้ไขข้อมูลได้: ' . $conn->error);
     }
 }
 
@@ -98,8 +126,7 @@ if (isset($_GET['del_img'])) {
         }
         $conn->query("DELETE FROM nearby_place_image WHERE image_id = $img_id");
     }
-    echo "<script>alert('ลบรูปภาพออกแล้ว'); window.location.href='manage_places.php';</script>";
-    exit();
+    alertSuccess('ลบรูปภาพออกแล้ว', 'manage_places.php');
 }
 
 // ----------------- DELETE DATA (ALL) -----------------
@@ -111,9 +138,9 @@ if (isset($_GET['delete'])) {
             unlink("../Place/" . $row['file_path']);
         }
     }
+    // Database cascade จะลบข้อมูลในตาราง nearby_place_image ให้อัตโนมัติ (ตามที่ตั้งค่าไว้ใน SQL)
     $conn->query("DELETE FROM nearby_place WHERE place_id = $id");
-    header("Location: manage_places.php");
-    exit();
+    alertSuccess('ลบสถานที่และข้อมูลทั้งหมดสำเร็จ', 'manage_places.php');
 }
 
 $result = $conn->query("
@@ -133,6 +160,9 @@ $adminNav = basename($_SERVER['PHP_SELF']);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         :root {
             --gold: #c9a84c;
@@ -176,7 +206,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             display: flex;
             flex-direction: column;
             z-index: 1000;
-            overflow: hidden
+            overflow: hidden;
+            transition: transform .28s ease;
         }
 
         .sidebar::before {
@@ -278,6 +309,61 @@ $adminNav = basename($_SERVER['PHP_SELF']);
         .nav-link.logout:hover {
             color: var(--red);
             background: rgba(224, 90, 90, .08)
+        }
+
+        /* Mobile Responsive */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 1100;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            color: var(--gold);
+            cursor: pointer;
+            font-size: 1.1rem
+        }
+
+        .sb-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .6);
+            z-index: 999;
+            backdrop-filter: blur(2px)
+        }
+
+        @media(max-width:768px) {
+            .sidebar {
+                transform: translateX(-100%)
+            }
+
+            .sidebar.open {
+                transform: translateX(0)
+            }
+
+            .sb-overlay.open {
+                display: block
+            }
+
+            .mobile-toggle {
+                display: flex
+            }
+
+            .main {
+                margin-left: 0 !important;
+                padding: 24px 18px 50px !important;
+            }
+
+            .topbar {
+                margin-top: 40px !important;
+            }
         }
 
         .main {
@@ -574,7 +660,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             cursor: pointer
         }
 
-        .btn-save {
+        .btn-save,
+        .btn-update {
             background: linear-gradient(135deg, var(--teal), #1e8a6c);
             color: #fff;
             border: none;
@@ -588,28 +675,10 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             gap: 6px
         }
 
-        .btn-save:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(56, 201, 160, .3)
-        }
-
-        .btn-update {
-            background: linear-gradient(135deg, var(--blue), #2b78d4);
-            color: #fff;
-            border: none;
-            padding: 9px 22px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all .2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px
-        }
-
+        .btn-save:hover,
         .btn-update:hover {
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(77, 159, 255, .3)
+            box-shadow: 0 6px 20px rgba(56, 201, 160, .3)
         }
 
         .btn-cancel {
@@ -693,8 +762,10 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 </head>
 
 <body>
+    <button type="button" class="mobile-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
+    <div class="sb-overlay" id="sbOverlay"></div>
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="sidebar-logo">
             <div class="logo-title">AR Ganesha</div>
             <div class="logo-sub">Admin Console</div>
@@ -703,6 +774,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             <div class="nav-label">Main</div>
             <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
             <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>"><i class="bi bi-people-fill"></i> Manage Users</a>
+            <a href="report_ganesha.php" class="nav-link <?= $adminNav === 'report_ganesha.php' ? 'active' : '' ?>"><i class="bi bi-file-earmark-bar-graph"></i> Ganesha Report</a>
+
             <div class="nav-label">Content</div>
             <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>"><i class="bi bi-bank2"></i> Ganesha Info</a>
             <a href="manage_ar_media.php" class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>"><i class="bi bi-camera-fill"></i> AR Media</a>
@@ -728,8 +801,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 <div class="topbar-right">
                     <div class="time-badge"><i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i> Live</div>
                     <div class="user-pill">
-                        <div class="avatar"><?= strtoupper(substr($_SESSION['username'], 0, 1)) ?></div>
-                        <span class="name"><?= htmlspecialchars($_SESSION['username']) ?></span>
+                        <div class="avatar"><?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?></div>
+                        <span class="name"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></span>
                     </div>
                 </div>
             </div>
@@ -770,13 +843,13 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                             <td style="font-weight:600"><?= htmlspecialchars($row['name']) ?></td>
                             <td><?= $cat_html ?></td>
                             <td class="time-txt"><?= substr($row['open_time'], 0, 5) ?> – <?= substr($row['close_time'], 0, 5) ?></td>
-                            <td style="text-align:center; display: flex; gap: 8px; justify-content: center;">
+                            <td style="text-align:center; display: flex; gap: 8px; justify-content: center; border-bottom:none;">
                                 <button type="button" class="btn-edit" data-bs-toggle="modal" data-bs-target="#editModal<?= $pid ?>">
                                     <i class="bi bi-pencil-square"></i> แก้ไข
                                 </button>
-                                <a href="?delete=<?= $pid ?>" class="btn-del" onclick="return confirm('ลบสถานที่นี้ ข้อมูลและรูปทั้งหมดจะหายไป?')">
+                                <button class="btn-del" onclick="confirmDelete(<?= $pid ?>)">
                                     <i class="bi bi-trash"></i> ลบ
-                                </a>
+                                </button>
                             </td>
                         </tr>
 
@@ -803,7 +876,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                                 $images_html .= '
                                 <div class="img-preview-box">
                                     <img src="../Place/' . htmlspecialchars($img_row['file_path']) . '" onerror="this.src=\'../Place/default.jpg\'">
-                                    <a href="?del_img=' . $img_row['image_id'] . '" class="btn-remove" title="ลบรูปนี้" onclick="return confirm(\'ลบรูปภาพนี้ทิ้งถาวร?\')"><i class="bi bi-x"></i></a>
+                                    <a href="javascript:void(0);" onclick="confirmDeleteImage(' . $img_row['image_id'] . ')" class="btn-remove" title="ลบรูปนี้"><i class="bi bi-x"></i></a>
                                 </div>';
                                 $has_img = true;
                             }
@@ -859,13 +932,13 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                                             ' . $images_html . '
                                             
                                             <label class="form-label mt-2">เพิ่มรูปภาพใหม่ (เลือกได้หลายรูป)</label>
-                                            <input type="file" name="place_imgs[]" id="edit_place_imgs_' . $pid . '" class="form-control" accept="image/*" multiple onchange="previewImages(this, \'preview_edit_' . $pid . '\')">
+                                            <input type="file" name="place_imgs[]" id="edit_place_imgs_' . $pid . '" class="form-control" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" multiple onchange="previewImages(this, \'preview_edit_' . $pid . '\')">
                                             <div id="preview_edit_' . $pid . '" class="mt-2 d-flex flex-wrap gap-2"></div>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
-                                        <button type="submit" name="edit_place" class="btn-update"><i class="bi bi-save"></i> บันทึกการแก้ไข</button>
+                                        <button type="submit" name="edit_place" class="btn-update btn-submit-action"><i class="bi bi-save"></i> บันทึกการแก้ไข</button>
                                     </div>
                                 </form>
                             </div>
@@ -924,13 +997,13 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                     </div>
                     <div class="mb-3">
                         <label class="form-label">รูปภาพ (เลือกได้หลายรูป) *</label>
-                        <input type="file" name="place_imgs[]" id="add_place_imgs" class="form-control" accept="image/*" multiple required onchange="previewImages(this, 'preview_add')">
+                        <input type="file" name="place_imgs[]" id="add_place_imgs" class="form-control" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" multiple required onchange="previewImages(this, 'preview_add')">
                         <div id="preview_add" class="mt-2 d-flex flex-wrap gap-2"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="submit" name="add_place" class="btn-save"><i class="bi bi-save"></i> บันทึก</button>
+                    <button type="submit" name="add_place" class="btn-save btn-submit-action"><i class="bi bi-save"></i> บันทึก</button>
                 </div>
             </form>
         </div>
@@ -940,7 +1013,23 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // ฟังก์ชัน Preview รูปภาพใหม่ที่เลือก
+        // ─── ควบคุมการเปิดปิด Sidebar มือถือ ───
+        const toggle = document.getElementById('sidebarToggle'),
+            sidebar = document.getElementById('sidebar'),
+            overlay = document.getElementById('sbOverlay');
+
+        if (toggle && sidebar && overlay) {
+            toggle.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open')
+            });
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('open')
+            });
+        }
+
+        // ─── การพรีวิวรูปภาพใหม่แบบ AJAX-like (ที่เขียนไว้เดิม) ───
         function previewImages(input, containerId) {
             const previewContainer = document.getElementById(containerId);
             previewContainer.innerHTML = '';
@@ -964,7 +1053,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             }
         }
 
-        // ฟังก์ชันสำหรับลบรูปออกจากหน้าพรีวิว
         function removePreviewFile(inputId, containerId, indexToRemove) {
             const input = document.getElementById(inputId);
             if (!input) return;
@@ -980,6 +1068,96 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 
             input.files = dt.files;
             previewImages(input, containerId);
+        }
+
+        // ─── การดักจับขนาดไฟล์ & Submit Spinner ───
+        document.addEventListener('DOMContentLoaded', () => {
+            const maxFileSizeMB = 5;
+            const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
+
+            // ตรวจสอบขนาดของแต่ละไฟล์ที่อัปโหลดเข้ามาแบบ Multiple
+            function validateMultipleImagesSize(event) {
+                const fileInput = event.target;
+                let hasOversizedFile = false;
+
+                if (fileInput.files.length > 0) {
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        if (fileInput.files[i].size > maxFileSizeBytes) {
+                            hasOversizedFile = true;
+                            break;
+                        }
+                    }
+
+                    if (hasOversizedFile) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ขนาดไฟล์เกินกำหนด!',
+                            text: `มีรูปภาพบางรูปที่ขนาดเกิน ${maxFileSizeMB} MB กรุณาเลือกไฟล์ใหม่ครับ`,
+                            confirmButtonColor: '#e8c97a'
+                        });
+                        fileInput.value = ''; // เคลียร์ไฟล์ทั้งหมดทิ้ง
+
+                        // เคลียร์พรีวิวออกด้วย
+                        const containerId = fileInput.id === 'add_place_imgs' ? 'preview_add' : fileInput.id.replace('edit_place_imgs_', 'preview_edit_');
+                        const previewContainer = document.getElementById(containerId);
+                        if (previewContainer) previewContainer.innerHTML = '';
+                    }
+                }
+            }
+
+            document.querySelectorAll('input[type="file"][multiple]').forEach(input => {
+                input.addEventListener('change', validateMultipleImagesSize);
+            });
+
+            // หมุน Spinner ตอนกดเซฟ
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const btnSave = this.querySelector('.btn-submit-action');
+                    if (btnSave) {
+                        btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> กำลังบันทึก...';
+                        btnSave.style.pointerEvents = 'none';
+                    }
+                });
+            });
+        });
+
+        // ─── ยืนยันการลบข้อมูล (สถานที่และรูปย่อย) ด้วย SweetAlert2 ───
+        function confirmDelete(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบสถานที่?',
+                text: "ข้อมูลสถานที่และรูปภาพทั้งหมดจะถูกลบทิ้งอย่างถาวร!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e05a5a',
+                cancelButtonColor: '#474761',
+                confirmButtonText: 'ใช่, ลบเลย!',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1e1e2a',
+                color: '#e8e6f0'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `?delete=${id}`;
+                }
+            });
+        }
+
+        function confirmDeleteImage(img_id) {
+            Swal.fire({
+                title: 'ลบรูปภาพนี้?',
+                text: "รูปภาพจะถูกลบออกจากระบบทันที",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#e05a5a',
+                cancelButtonColor: '#474761',
+                confirmButtonText: 'ลบรูปภาพ',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1e1e2a',
+                color: '#e8e6f0'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `?del_img=${img_id}`;
+                }
+            });
         }
     </script>
 </body>

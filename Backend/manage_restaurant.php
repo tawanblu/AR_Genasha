@@ -3,7 +3,6 @@ session_start();
 require_once("../connect.php");
 /** @var mysqli $conn */
 
-
 // ตั้งค่าโซนเวลาประเทศไทย
 date_default_timezone_set('Asia/Bangkok');
 $current_time = date('H:i:s');
@@ -16,13 +15,30 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
 // กำหนดหมวดหมู่สำหรับทำปุ่ม Filter
 $category_options = ['อาหารตามสั่ง', 'ก๋วยเตี๋ยว', 'คาเฟ่ / ของหวาน', 'ปิ้งย่าง / ชาบู', 'อาหารอีสาน', 'อาหารฟาสต์ฟู้ด', 'อื่นๆ'];
 
-// ADD
+// ─── ฟังก์ชันช่วยเหลือสำหรับแสดง SweetAlert2 ───
+function alertSuccess($msg, $redirect)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'success', title: 'สำเร็จ!', text: '$msg', confirmButtonColor: '#c9a84c'}).then(() => { window.location.href='$redirect'; });
+        });
+    </script></body></html>";
+    exit();
+}
+function alertError($msg)
+{
+    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
+        document.addEventListener('DOMContentLoaded', function() {
+            Swal.fire({icon: 'error', title: 'ข้อผิดพลาด!', text: '$msg', confirmButtonColor: '#e05a5a'}).then(() => { history.back(); });
+        });
+    </script></body></html>";
+    exit();
+}
+
+// ----------------- ADD DATA -----------------
 if (isset($_POST['add_restaurant'])) {
     $name = $_POST['name'];
-
-    // รับค่าหมวดหมู่ (ถ้าเลือกหลายอัน จะมาเป็น Array นำมาต่อกันด้วยลูกน้ำ)
     $category = isset($_POST['category']) ? implode(", ", $_POST['category']) : '';
-
     $detail = $_POST['detail'];
     $map_url = $_POST['map_url'];
     $open_time = $_POST['open_time'];
@@ -35,9 +51,14 @@ if (isset($_POST['add_restaurant'])) {
         $rid = $stmt->insert_id;
         if (!empty($_FILES['res_imgs']['name'][0])) {
             $si = $conn->prepare("INSERT INTO restaurant_image (restaurant_id,file_path) VALUES (?,?)");
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
             foreach ($_FILES['res_imgs']['name'] as $key => $filename) {
                 $tempname = $_FILES['res_imgs']['tmp_name'][$key];
-                $ext = pathinfo($filename, PATHINFO_EXTENSION);
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                if (!in_array($ext, $allowed_ext)) continue;
+
                 $new_filename = time() . "_" . rand(1000, 9999) . "_" . $key . "." . $ext;
                 if (move_uploaded_file($tempname, "../Restaurants/" . $new_filename)) {
                     $si->bind_param("is", $rid, $new_filename);
@@ -45,19 +66,17 @@ if (isset($_POST['add_restaurant'])) {
                 }
             }
         }
+        alertSuccess('เพิ่มร้านอาหารและรูปภาพสำเร็จ', 'manage_restaurant.php');
+    } else {
+        alertError('ไม่สามารถเพิ่มข้อมูลได้: ' . $conn->error);
     }
-    header("Location: manage_restaurant.php?ok=add");
-    exit();
 }
 
-// EDIT
+// ----------------- EDIT DATA -----------------
 if (isset($_POST['edit_restaurant'])) {
     $rid = intval($_POST['restaurant_id']);
     $name = $_POST['name'];
-
-    // รับค่าหมวดหมู่แบบ Array มาแปลงเป็น String
     $category = isset($_POST['category']) ? implode(", ", $_POST['category']) : '';
-
     $detail = $_POST['detail'];
     $map_url = $_POST['map_url'];
     $open_time = $_POST['open_time'];
@@ -65,25 +84,32 @@ if (isset($_POST['edit_restaurant'])) {
 
     $stmt = $conn->prepare("UPDATE restaurant SET restaurant_name=?,category=?,detail=?,map_url=?,open_time=?,close_time=? WHERE restaurant_id=?");
     $stmt->bind_param("ssssssi", $name, $category, $detail, $map_url, $open_time, $close_time, $rid);
-    $stmt->execute();
 
-    if (!empty($_FILES['res_imgs']['name'][0])) {
-        $si = $conn->prepare("INSERT INTO restaurant_image (restaurant_id,file_path) VALUES (?,?)");
-        foreach ($_FILES['res_imgs']['name'] as $key => $filename) {
-            $tempname = $_FILES['res_imgs']['tmp_name'][$key];
-            $ext = pathinfo($filename, PATHINFO_EXTENSION);
-            $new_filename = time() . "_" . rand(1000, 9999) . "_" . $key . "." . $ext;
-            if (move_uploaded_file($tempname, "../Restaurants/" . $new_filename)) {
-                $si->bind_param("is", $rid, $new_filename);
-                $si->execute();
+    if ($stmt->execute()) {
+        if (!empty($_FILES['res_imgs']['name'][0])) {
+            $si = $conn->prepare("INSERT INTO restaurant_image (restaurant_id,file_path) VALUES (?,?)");
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+            foreach ($_FILES['res_imgs']['name'] as $key => $filename) {
+                $tempname = $_FILES['res_imgs']['tmp_name'][$key];
+                $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+                if (!in_array($ext, $allowed_ext)) continue;
+
+                $new_filename = time() . "_" . rand(1000, 9999) . "_" . $key . "." . $ext;
+                if (move_uploaded_file($tempname, "../Restaurants/" . $new_filename)) {
+                    $si->bind_param("is", $rid, $new_filename);
+                    $si->execute();
+                }
             }
         }
+        alertSuccess('แก้ไขข้อมูลร้านอาหารสำเร็จ', 'manage_restaurant.php');
+    } else {
+        alertError('ไม่สามารถแก้ไขข้อมูลได้: ' . $conn->error);
     }
-    header("Location: manage_restaurant.php?ok=edit");
-    exit();
 }
 
-// DELETE IMAGE
+// ----------------- DELETE SINGLE IMAGE -----------------
 if (isset($_GET['del_img'])) {
     $iid = intval($_GET['del_img']);
     $r = $conn->query("SELECT file_path FROM restaurant_image WHERE image_id=$iid");
@@ -92,11 +118,10 @@ if (isset($_GET['del_img'])) {
         if (file_exists($f)) unlink($f);
     }
     $conn->query("DELETE FROM restaurant_image WHERE image_id=$iid");
-    header("Location: " . $_SERVER['HTTP_REFERER']);
-    exit();
+    alertSuccess('ลบรูปภาพออกแล้ว', 'manage_restaurant.php');
 }
 
-// DELETE RESTAURANT
+// ----------------- DELETE RESTAURANT -----------------
 if (isset($_GET['delete'])) {
     $id = intval($_GET['delete']);
     $res = $conn->query("SELECT file_path FROM restaurant_image WHERE restaurant_id=$id");
@@ -104,8 +129,7 @@ if (isset($_GET['delete'])) {
         if (file_exists("../Restaurants/" . $row['file_path'])) unlink("../Restaurants/" . $row['file_path']);
     }
     $conn->query("DELETE FROM restaurant WHERE restaurant_id=$id");
-    header("Location: manage_restaurant.php?ok=del");
-    exit();
+    alertSuccess('ลบร้านอาหารและข้อมูลทั้งหมดสำเร็จ', 'manage_restaurant.php');
 }
 
 $result = $conn->query("SELECT r.*,(SELECT file_path FROM restaurant_image WHERE restaurant_id=r.restaurant_id LIMIT 1) AS file_path FROM restaurant r ORDER BY r.restaurant_id DESC");
@@ -123,6 +147,9 @@ $adminNav = basename($_SERVER['PHP_SELF']);
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         :root {
             --gold: #c9a84c;
@@ -309,6 +336,33 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             background: rgba(0, 0, 0, .6);
             z-index: 999;
             backdrop-filter: blur(2px)
+        }
+
+        @media(max-width:768px) {
+            .sidebar {
+                transform: translateX(-100%)
+            }
+
+            .sidebar.open {
+                transform: translateX(0)
+            }
+
+            .sb-overlay.open {
+                display: block
+            }
+
+            .mobile-toggle {
+                display: flex
+            }
+
+            .main {
+                margin-left: 0 !important;
+                padding: 24px 18px 50px !important;
+            }
+
+            .topbar {
+                margin-top: 50px !important;
+            }
         }
 
         .main {
@@ -592,14 +646,14 @@ $adminNav = basename($_SERVER['PHP_SELF']);
         .form-select:focus {
             border-color: var(--gold) !important;
             box-shadow: 0 0 0 3px var(--gold-dim) !important;
-            background: var(--surface-3) !important;
-            color: var(--txt) !important;
             outline: none !important
         }
 
         .img-preview-box {
             position: relative;
-            display: inline-block
+            display: inline-block;
+            margin-right: 8px;
+            margin-bottom: 8px;
         }
 
         .img-preview-box img {
@@ -628,6 +682,10 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             text-decoration: none
         }
 
+        .img-preview-box .btn-remove:hover {
+            background: #ff7676;
+        }
+
         .section-label {
             font-size: .7rem;
             color: var(--txt-3);
@@ -635,6 +693,19 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             text-transform: uppercase;
             letter-spacing: .1em;
             margin-bottom: 8px
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--txt-3)
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 12px;
+            opacity: .3
         }
 
         .modal-btn-save {
@@ -677,64 +748,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             color: var(--txt)
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--txt-3)
-        }
-
-        .empty-state i {
-            font-size: 2.5rem;
-            display: block;
-            margin-bottom: 12px;
-            opacity: .3
-        }
-
-        .toast-container-custom {
-            position: fixed;
-            top: 20px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px
-        }
-
-        .toast-custom {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--border-dim);
-            border-radius: var(--radius);
-            padding: 13px 18px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, .5);
-            font-size: .83rem;
-            color: var(--txt);
-            animation: slideIn .3s ease both;
-            min-width: 260px
-        }
-
-        .toast-custom.success {
-            border-left: 3px solid var(--teal)
-        }
-
-        .toast-custom.success i {
-            color: var(--teal)
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(16px)
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0)
-            }
-        }
-
         @keyframes fadeUp {
             from {
                 opacity: 0;
@@ -746,49 +759,10 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 transform: translateY(0)
             }
         }
-
-        @media(max-width:768px) {
-            .sidebar {
-                transform: translateX(-100%)
-            }
-
-            .sidebar.open {
-                transform: translateX(0)
-            }
-
-            .sb-overlay.open {
-                display: block
-            }
-
-            .mobile-toggle {
-                display: flex
-            }
-
-            .main {
-                margin-left: 0;
-                padding: 24px 18px 50px
-            }
-
-            .topbar {
-                margin-top: 50px
-            }
-        }
     </style>
 </head>
 
 <body>
-
-    <?php if (isset($_GET['ok'])): $msgs = ['add' => 'เพิ่มร้านอาหารสำเร็จ', 'edit' => 'แก้ไขข้อมูลสำเร็จ', 'del' => 'ลบร้านอาหารแล้ว'];
-        $m = $msgs[$_GET['ok']] ?? 'ดำเนินการสำเร็จ'; ?>
-        <div class="toast-container-custom">
-            <div class="toast-custom success"><i class="bi bi-check-circle-fill"></i><span><?= $m ?></span></div>
-        </div>
-        <script>
-            setTimeout(() => {
-                document.querySelector('.toast-custom')?.remove()
-            }, 3500)
-        </script>
-    <?php endif; ?>
 
     <button type="button" class="mobile-toggle" id="sidebarToggle" aria-label="เมนู"><i class="bi bi-list"></i></button>
     <div class="sb-overlay" id="sbOverlay"></div>
@@ -802,6 +776,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             <div class="nav-label">Main</div>
             <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
             <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>"><i class="bi bi-people-fill"></i> Manage Users</a>
+            <a href="report_ganesha.php" class="nav-link <?= $adminNav === 'report_ganesha.php' ? 'active' : '' ?>"><i class="bi bi-file-earmark-bar-graph"></i> Ganesha Report</a>
+
             <div class="nav-label">Content</div>
             <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>"><i class="bi bi-bank2"></i> Ganesha Info</a>
             <a href="manage_ar_media.php" class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>"><i class="bi bi-camera-fill"></i> AR Media</a>
@@ -828,8 +804,8 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 <div class="topbar-right">
                     <div class="time-badge"><i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i> Live</div>
                     <div class="user-pill">
-                        <div class="avatar"><?= strtoupper(substr($_SESSION['username'], 0, 1)) ?></div>
-                        <span class="name"><?= htmlspecialchars($_SESSION['username']) ?></span>
+                        <div class="avatar"><?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?></div>
+                        <span class="name"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></span>
                     </div>
                 </div>
             </div>
@@ -859,14 +835,19 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                             $rcats = $rcat_raw ? explode(", ", $rcat_raw) : ['ไม่มีหมวดหมู่'];
                             $cat_html = '';
                             foreach ($rcats as $c) {
-                                $cat_html .= '<span class="cat-chip me-1">' . htmlspecialchars(trim($c)) . '</span> ';
+                                if (trim($c) != '') {
+                                    $cat_html .= '<span class="cat-chip me-1">' . htmlspecialchars(trim($c)) . '</span> ';
+                                }
                             }
 
                             $img_res = $conn->query("SELECT * FROM restaurant_image WHERE restaurant_id=$rid");
                             $images_html = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">';
+                            $has_img = false;
                             while ($img_row = $img_res->fetch_assoc()) {
-                                $images_html .= '<div class="img-preview-box"><img src="../Restaurants/' . htmlspecialchars($img_row['file_path']) . '" onerror="this.src=\'../Restaurants/default.jpg\'"><a href="?del_img=' . $img_row['image_id'] . '" class="btn-remove" onclick="return confirm(\'ลบรูปภาพนี้?\')"><i class="bi bi-x"></i></a></div>';
+                                $images_html .= '<div class="img-preview-box"><img src="../Restaurants/' . htmlspecialchars($img_row['file_path']) . '" onerror="this.src=\'../Restaurants/default.jpg\'"><a href="javascript:void(0);" onclick="confirmDeleteImage(' . $img_row['image_id'] . ')" class="btn-remove" title="ลบรูปนี้"><i class="bi bi-x"></i></a></div>';
+                                $has_img = true;
                             }
+                            if (!$has_img) $images_html .= '<span style="color:var(--muted); font-size:0.8rem;">ยังไม่มีรูปภาพ</span>';
                             $images_html .= '</div>';
 
                             // สร้าง Checkbox สำหรับหมวดหมู่ใน Modal แก้ไข
@@ -896,7 +877,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                                 <td style="text-align:center">
                                     <div style="display:flex;gap:6px;justify-content:center">
                                         <button class="btn-edit" data-bs-toggle="modal" data-bs-target="#editModal<?= $rid ?>"><i class="bi bi-pencil-square"></i> แก้ไข</button>
-                                        <a href="?delete=<?= $rid ?>" class="btn-del" onclick="return confirm('ลบร้าน &quot;<?= $rname ?>&quot;?')"><i class="bi bi-trash"></i> ลบ</a>
+                                        <button class="btn-del" onclick="confirmDelete(<?= $rid ?>)"><i class="bi bi-trash"></i> ลบ</button>
                                     </div>
                                 </td>
                             </tr>
@@ -922,12 +903,15 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                             <div class="mb-3">
                               <div class="section-label">รูปปัจจุบัน <small style="color:var(--txt-3);text-transform:none;font-weight:400">(กด × เพื่อลบ)</small></div>
                               ' . $images_html . '
-                              <label class="form-label">เพิ่มรูปใหม่</label>
-                              <input type="file" name="res_imgs[]" class="form-control" accept="image/*" multiple onchange="previewImages(this,\'preview_edit_' . $rid . '\')">
+                              <label class="form-label mt-2">เพิ่มรูปใหม่</label>
+                              <input type="file" name="res_imgs[]" id="edit_res_imgs_' . $rid . '" class="form-control" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" multiple onchange="previewImages(this,\'preview_edit_' . $rid . '\')">
                               <div id="preview_edit_' . $rid . '" class="mt-2 d-flex flex-wrap gap-2"></div>
                             </div>
                           </div>
-                          <div class="modal-footer"><button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">ยกเลิก</button><button type="submit" name="edit_restaurant" class="modal-btn-save"><i class="bi bi-save2"></i> บันทึก</button></div>
+                          <div class="modal-footer">
+                              <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
+                              <button type="submit" name="edit_restaurant" class="modal-btn-save btn-submit-action"><i class="bi bi-save2"></i> บันทึก</button>
+                          </div>
                         </form>
                       </div>
                     </div>';
@@ -946,7 +930,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
         </div>
     </main>
 
-    <!-- Add Modal -->
     <div class="modal fade" id="addModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <form class="modal-content" method="POST" enctype="multipart/form-data">
@@ -980,13 +963,13 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                     </div>
                     <div class="mb-3">
                         <label class="form-label">รูปภาพ (เลือกได้หลายรูป) <span style="color:var(--red)">*</span></label>
-                        <input type="file" name="res_imgs[]" class="form-control" accept="image/*" multiple required onchange="previewImages(this,'preview_add')">
+                        <input type="file" name="res_imgs[]" id="add_res_imgs" class="form-control" accept="image/png, image/jpeg, image/jpg, image/webp, image/gif" multiple required onchange="previewImages(this,'preview_add')">
                         <div id="preview_add" class="mt-2 d-flex flex-wrap gap-2"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">ยกเลิก</button>
-                    <button type="submit" name="add_restaurant" class="modal-btn-save"><i class="bi bi-save2"></i> บันทึก</button>
+                    <button type="submit" name="add_restaurant" class="modal-btn-save btn-submit-action"><i class="bi bi-save2"></i> บันทึก</button>
                 </div>
             </form>
         </div>
@@ -996,22 +979,96 @@ $adminNav = basename($_SERVER['PHP_SELF']);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function previewImages(input, cid) {
-            const c = document.getElementById(cid);
-            c.innerHTML = '';
-            if (input.files) Array.from(input.files).forEach((file, i) => {
-                const r = new FileReader();
-                r.onload = e => {
-                    const b = document.createElement('div');
-                    b.className = 'img-preview-box';
-                    b.id = 'pv-' + cid + '-' + i;
-                    b.innerHTML = `<img src="${e.target.result}"><button type="button" class="btn-remove" onclick="document.getElementById('${b.id}').remove()"><i class="bi bi-x"></i></button>`;
-                    c.appendChild(b);
-                };
-                r.readAsDataURL(file);
-            });
+        // ─── การพรีวิวรูปภาพใหม่แบบ AJAX-like พร้อมระบบลบ ───
+        function previewImages(input, containerId) {
+            const previewContainer = document.getElementById(containerId);
+            previewContainer.innerHTML = '';
+
+            if (input.files) {
+                Array.from(input.files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const box = document.createElement('div');
+                        box.className = 'img-preview-box position-relative';
+                        box.id = `new-file-${containerId}-${index}`;
+                        box.innerHTML = `
+                            <img src="${e.target.result}">
+                            <span class="badge bg-primary position-absolute top-0 start-0 m-1" style="font-size:0.5rem">New</span>
+                            <button type="button" class="btn-remove" onclick="removePreviewFile('${input.id}', '${containerId}', ${index})"><i class="bi bi-x"></i></button>
+                        `;
+                        previewContainer.appendChild(box);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
         }
 
+        function removePreviewFile(inputId, containerId, indexToRemove) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+
+            const dt = new DataTransfer();
+            const files = input.files;
+
+            for (let i = 0; i < files.length; i++) {
+                if (i !== indexToRemove) {
+                    dt.items.add(files[i]);
+                }
+            }
+            input.files = dt.files;
+            previewImages(input, containerId);
+        }
+
+        // ─── การดักจับขนาดไฟล์ & Submit Spinner ───
+        document.addEventListener('DOMContentLoaded', () => {
+            const maxFileSizeMB = 5;
+            const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
+
+            function validateMultipleImagesSize(event) {
+                const fileInput = event.target;
+                let hasOversizedFile = false;
+
+                if (fileInput.files.length > 0) {
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        if (fileInput.files[i].size > maxFileSizeBytes) {
+                            hasOversizedFile = true;
+                            break;
+                        }
+                    }
+
+                    if (hasOversizedFile) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'ขนาดไฟล์เกินกำหนด!',
+                            text: `มีรูปภาพบางรูปที่ขนาดเกิน ${maxFileSizeMB} MB กรุณาเลือกไฟล์ใหม่ครับ`,
+                            confirmButtonColor: '#e8c97a'
+                        });
+                        fileInput.value = ''; // เคลียร์ไฟล์ทิ้ง
+
+                        const containerId = fileInput.id === 'add_res_imgs' ? 'preview_add' : fileInput.id.replace('edit_res_imgs_', 'preview_edit_');
+                        const previewContainer = document.getElementById(containerId);
+                        if (previewContainer) previewContainer.innerHTML = '';
+                    }
+                }
+            }
+
+            document.querySelectorAll('input[type="file"][multiple]').forEach(input => {
+                input.addEventListener('change', validateMultipleImagesSize);
+            });
+
+            // หมุน Spinner ตอนกดเซฟ
+            document.querySelectorAll('form').forEach(form => {
+                form.addEventListener('submit', function() {
+                    const btnSave = this.querySelector('.btn-submit-action');
+                    if (btnSave) {
+                        btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> กำลังบันทึก...';
+                        btnSave.style.pointerEvents = 'none';
+                    }
+                });
+            });
+        });
+
+        // ─── ควบคุมการเปิดปิด Sidebar มือถือ ───
         const toggle = document.getElementById('sidebarToggle'),
             sidebar = document.getElementById('sidebar'),
             overlay = document.getElementById('sbOverlay');
@@ -1023,6 +1080,45 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             sidebar.classList.remove('open');
             overlay.classList.remove('open')
         });
+
+        // ─── ยืนยันการลบข้อมูลด้วย SweetAlert2 ───
+        function confirmDelete(id) {
+            Swal.fire({
+                title: 'ยืนยันการลบร้านอาหาร?',
+                text: "ข้อมูลและรูปภาพทั้งหมดจะถูกลบทิ้งอย่างถาวร!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e05a5a',
+                cancelButtonColor: '#474761',
+                confirmButtonText: 'ใช่, ลบเลย!',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1e1e2a',
+                color: '#e8e6f0'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `?delete=${id}`;
+                }
+            });
+        }
+
+        function confirmDeleteImage(img_id) {
+            Swal.fire({
+                title: 'ลบรูปภาพนี้?',
+                text: "รูปภาพจะถูกลบออกจากระบบทันที",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#e05a5a',
+                cancelButtonColor: '#474761',
+                confirmButtonText: 'ลบรูปภาพ',
+                cancelButtonText: 'ยกเลิก',
+                background: '#1e1e2a',
+                color: '#e8e6f0'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `?del_img=${img_id}`;
+                }
+            });
+        }
     </script>
 </body>
 
