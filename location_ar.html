@@ -515,14 +515,14 @@
         // เมื่อพร้อมใช้งานจริง ให้นำเครื่องหมาย /* และ */ ด้านล่างนี้ออก 
         // และแก้ไข <button id="start-btn" onclick="startMindAR()"> ด้านบน เป็น onclick="checkLocationAuto()" 
         // ==========================================
-        /*
-        const TARGET_LAT = 13.730248; 
-        const TARGET_LNG = 100.521570; 
-        const MAX_DISTANCE = 50; 
+
+        const TARGET_LAT = 15.0699969;
+        const TARGET_LNG = 100.7252879;
+        const MAX_DISTANCE = 500;
 
         function setStatus(text, cls = '') {
             const el = document.getElementById('location-status');
-            if(el) {
+            if (el) {
                 el.textContent = text;
                 el.className = cls;
             }
@@ -557,13 +557,13 @@
                         setStatus('✓ ท่านอยู่ในพื้นที่แล้ว', 'ok');
                         btn.disabled = false;
                         btn.textContent = '✦ เริ่ม AR';
-                        btn.onclick = startMindAR; 
+                        btn.onclick = startMindAR;
                     } else {
                         showToast(`คุณอยู่ห่างจากสถานที่ ${Math.round(dist)} เมตร\n(ต้องอยู่ภายใน ${MAX_DISTANCE} เมตร)`);
                         setStatus(`ห่างจากพื้นที่ ${Math.round(dist)} ม.`, 'fail');
                         btn.disabled = false;
                         btn.textContent = '↻ ตรวจสอบตำแหน่งอีกครั้ง';
-                        btn.onclick = checkLocationAuto; 
+                        btn.onclick = checkLocationAuto;
                     }
                 },
                 (err) => {
@@ -576,12 +576,12 @@
                     setStatus('ไม่สามารถดึงตำแหน่งได้', 'fail');
                     btn.disabled = false;
                     btn.textContent = '↻ ลองตรวจสอบอีกครั้ง';
-                    btn.onclick = checkLocationAuto; 
+                    btn.onclick = checkLocationAuto;
                 },
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
-        */
+
         // ==========================================
 
         function startMindAR() {
@@ -604,10 +604,7 @@
             };
             scene.hasLoaded ? tryStart() : scene.addEventListener('loaded', tryStart);
 
-            // ❌ เอาการขอสิทธิ์กล้องออก เพราะ MindAR จัดการให้เองอยู่แล้ว
-            // navigator.mediaDevices.getUserMedia({ video: true })
-            //     .then(() => console.log('Camera OK'))
-            //     .catch(() => showToast('กรุณาอนุญาตให้ใช้งานกล้อง'));
+
         }
 
         window.onload = () => {
