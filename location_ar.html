@@ -340,11 +340,11 @@
             <div class="om">ॐ</div>
             <div class="title">Ganesha AR</div>
             <p class="desc">
-                กรุณาอนุญาตให้เข้าถึงตำแหน่ง (GPS)<br>
-                เพื่อตรวจสอบว่าท่านอยู่ในพื้นที่ที่กำหนด
+                [โหมดทดสอบ] สามารถใช้งานได้ทุกที่<br>
+                กดเริ่ม AR เพื่อเปิดกล้องสแกน
             </p>
-            <button id="start-btn" onclick="checkLocationAuto()">📍 ตรวจสอบตำแหน่ง</button>
-            <div id="location-status">ระบบต้องการเข้าถึงพิกัดของคุณ</div>
+            <button id="start-btn" onclick="startMindAR()">✦ เริ่ม AR</button>
+            <div id="location-status">โหมดทดสอบ: ปิดการล็อกพิกัด</div>
         </div>
     </div>
 
@@ -504,9 +504,11 @@
         }
 
         // ==========================================
-        // 📍 ระบบ GPS ที่เปิดใช้งานแล้ว
+        // 📍 โค้ดส่วนระบบ GPS (คอมเมนต์ไว้สำหรับตอนเทส)
+        // เมื่อพร้อมใช้งานจริง ให้นำเครื่องหมาย /* และ */ ด้านล่างนี้ออก 
+        // และแก้ไข <button id="start-btn" onclick="startMindAR()"> ด้านบน เป็น onclick="checkLocationAuto()" 
         // ==========================================
-
+        /*
         const TARGET_LAT = 15.0699969;
         const TARGET_LNG = 100.7252879;
         const MAX_DISTANCE = 500;
@@ -572,6 +574,8 @@
                 { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         }
+        */
+        // ==========================================
 
         function startMindAR() {
             // ปลดล็อกเสียงและวิดีโอ (จำเป็นสำหรับ iOS)

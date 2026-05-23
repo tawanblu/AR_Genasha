@@ -826,7 +826,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
                 <i class="bi bi-people-fill"></i> Manage Users
             </a>
 
-
             <div class="nav-label">Content</div>
 
             <a href="manage_ganeshainfo.php"
