@@ -340,11 +340,11 @@
             <div class="om">ॐ</div>
             <div class="title">Ganesha AR</div>
             <p class="desc">
-                [โหมดทดสอบ] สามารถใช้งานได้ทุกที่<br>
-                กดเริ่ม AR เพื่อเปิดกล้องสแกน
+                กรุณาอนุญาตให้เข้าถึงตำแหน่ง (GPS)<br>
+                เพื่อตรวจสอบว่าท่านอยู่ในพื้นที่ที่กำหนด
             </p>
-            <button id="start-btn" onclick="startMindAR()">✦ เริ่ม AR</button>
-            <div id="location-status">โหมดทดสอบ: ปิดการล็อกพิกัด</div>
+            <button id="start-btn" onclick="checkLocationAuto()">📍 ตรวจสอบตำแหน่ง</button>
+            <div id="location-status">ระบบต้องการเข้าถึงพิกัดของคุณ</div>
         </div>
     </div>
 
@@ -381,7 +381,6 @@
         let activeTarget = null;
 
         // ── ข้อมูลวิดีโอ และ กลุ่มเสียง (สุ่มเสียง) ──
-        // กำหนดไฟล์วิดีโอเป็น videos/AR_MOVE_SU01.mp4 ทุก target
         const data = [
             { target_index: 0, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
             { target_index: 1, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
@@ -422,7 +421,7 @@
                 if (item.audio_urls && item.audio_urls.length > 0) {
                     const audioEl = document.createElement('audio');
                     audioEl.id = `audio-${item.target_index}`;
-                    audioEl.loop = false; // ปิด loop เพื่อให้เล่นรอบเดียวจบ
+                    audioEl.loop = false;
                     audioEl.preload = "auto";
                     document.body.appendChild(audioEl);
                 }
@@ -433,17 +432,15 @@
                     document.getElementById('audio-controls').style.display = 'block';
                     activeTarget = item;
 
-                    // สั่งให้วิดีโอเปลี่ยนซอร์สและเล่น
                     const v = document.querySelector('#main-video');
                     const plane = entity.querySelector('.video-plane');
 
-                    // เช็คว่า source ต้องเปลี่ยนไหม ป้องกันการกระตุกโหลดซ้ำ
                     if (!v.src.endsWith(item.video_url)) {
                         v.src = item.video_url;
                         v.load();
                     }
 
-                    v.muted = true; // บังคับปิดเสียงวิดีโอไว้ก่อน เพื่อให้ผู้ใช้ฟังสุ่มเสียงแทน
+                    v.muted = true;
 
                     try {
                         await v.play();
@@ -459,14 +456,11 @@
                     document.getElementById('scanning-overlay').style.display = 'flex';
                     document.getElementById('audio-controls').style.display = 'none';
 
-                    // หยุดเล่นวิดีโอ
                     const v = document.querySelector('#main-video');
                     v.pause();
 
-                    // ซ่อน Plane ทุกตัวเพื่อป้องกันการแสดงค้าง
                     document.querySelectorAll('.video-plane').forEach(p => p.setAttribute('visible', 'false'));
 
-                    // หยุดเล่นไฟล์เสียง
                     if (activeTarget) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                         if (audio) {
@@ -485,7 +479,6 @@
 
             const audio = document.getElementById(`audio-${activeTarget.target_index}`);
             if (audio) {
-                // สุ่มเสียงจาก Array ของแต่ละวิดีโอ/เป้าหมาย
                 const randomIndex = Math.floor(Math.random() * activeTarget.audio_urls.length);
                 const randomSound = activeTarget.audio_urls[randomIndex];
 
@@ -511,9 +504,7 @@
         }
 
         // ==========================================
-        // 📍 โค้ดส่วนระบบ GPS (คอมเมนต์ไว้สำหรับตอนเทส)
-        // เมื่อพร้อมใช้งานจริง ให้นำเครื่องหมาย /* และ */ ด้านล่างนี้ออก 
-        // และแก้ไข <button id="start-btn" onclick="startMindAR()"> ด้านบน เป็น onclick="checkLocationAuto()" 
+        // 📍 ระบบ GPS ที่เปิดใช้งานแล้ว
         // ==========================================
 
         const TARGET_LAT = 15.0699969;
@@ -582,8 +573,6 @@
             );
         }
 
-        // ==========================================
-
         function startMindAR() {
             // ปลดล็อกเสียงและวิดีโอ (จำเป็นสำหรับ iOS)
             document.querySelectorAll('audio').forEach(audio => {
@@ -603,8 +592,6 @@
                 sys ? sys.start() : console.error('MindAR not ready');
             };
             scene.hasLoaded ? tryStart() : scene.addEventListener('loaded', tryStart);
-
-
         }
 
         window.onload = () => {
