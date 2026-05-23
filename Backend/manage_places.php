@@ -774,7 +774,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             <div class="nav-label">Main</div>
             <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
             <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>"><i class="bi bi-people-fill"></i> Manage Users</a>
-            <a href="report_ganesha.php" class="nav-link <?= $adminNav === 'report_ganesha.php' ? 'active' : '' ?>"><i class="bi bi-file-earmark-bar-graph"></i> Ganesha Report</a>
+
 
             <div class="nav-label">Content</div>
             <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>"><i class="bi bi-bank2"></i> Ganesha Info</a>

@@ -609,9 +609,6 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>">
                 <i class="bi bi-people-fill"></i> Manage Users
             </a>
-            <a href="report_ganesha.php" class="nav-link <?= $adminNav === 'report_ganesha.php' ? 'active' : '' ?>">
-                <i class="bi bi-file-earmark-bar-graph"></i> Ganesha Report
-            </a>
 
             <div class="nav-label">Content</div>
 
