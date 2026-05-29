@@ -480,7 +480,7 @@ $json_m_data = json_encode($chart_data);
 
         .ar-dashboard-row {
             display: grid;
-            grid-template-columns: 1fr 1fr 1.4fr;
+            grid-template-columns: 1fr 1.8fr;
             gap: 16px;
             margin-bottom: 32px;
         }
@@ -493,7 +493,7 @@ $json_m_data = json_encode($chart_data);
             display: flex;
             flex-direction: column;
             position: relative;
-            height: 280px;
+            height: 320px;
         }
 
         .chart-box h5 {
@@ -864,14 +864,9 @@ $json_m_data = json_encode($chart_data);
             <div class="section-title"><i class="bi bi-phone-fill"></i> AR Usage & Rankings</div>
         </div>
         <div class="ar-dashboard-row anim anim-6">
-            <div class="stat-card c-blue" style="height: 280px;">
-                <div class="stat-icon-wrap"><i class="bi bi-phone"></i></div>
-                <div class="stat-label">AR Usage</div>
-                <div class="stat-number"><?= number_format($countARStart) ?></div>
-                <i class="bi bi-phone bg-icon"></i>
-            </div>
+
             <div class="chart-box">
-                <h5><i class="bi bi-pie-chart-fill me-2"></i> สัดส่วนพฤติกรรม AR</h5>
+                <h5><i class="bi bi-pie-chart-fill me-2"></i> การใช้งานฟีเจอร์ AR ของผู้ใช้</h5>
                 <div class="chart-container-inner">
                     <canvas id="arUsageChart"></canvas>
                 </div>
@@ -1116,7 +1111,7 @@ $json_m_data = json_encode($chart_data);
             data: {
                 labels: <?= $js_labels ?>,
                 datasets: [{
-                    label: 'จำนวนครั้งที่ส่อง',
+                    label: 'จำนวนครั้งที่ใช้ฟีเจอร์ AR',
                     data: <?= $js_data ?>,
                     backgroundColor: 'rgba(201, 168, 76, 0.5)',
                     borderColor: '#c9a84c',
@@ -1129,15 +1124,19 @@ $json_m_data = json_encode($chart_data);
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
+                    // แกน X คือแกนที่แสดงจำนวนตัวเลข (เพราะกราฟแนวนอน)
                     x: {
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(255, 255, 255, 0.05)'
                         },
                         ticks: {
-                            color: '#7a7a96'
+                            color: '#7a7a96',
+                            precision: 0, // บังคับให้แกน X ไม่มีทศนิยม
+                            stepSize: 1 // ให้กราฟขยับทีละ 1
                         }
                     },
+                    // แกน Y คือชื่อโมเดลพระ
                     y: {
                         grid: {
                             display: false
@@ -1150,6 +1149,7 @@ $json_m_data = json_encode($chart_data);
                         }
                     }
                 },
+                // ย้าย plugins ออกมาให้อยู่ระดับเดียวกับ scales
                 plugins: {
                     legend: {
                         display: false
@@ -1182,6 +1182,10 @@ $json_m_data = json_encode($chart_data);
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(255,255,255,0.05)'
+                        },
+                        ticks: {
+                            precision: 0, // เพิ่ม precision: 0 ให้แกน Y ของจำนวนรีวิวด้วย
+                            stepSize: 1
                         }
                     },
                     x: {

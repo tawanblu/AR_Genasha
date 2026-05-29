@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ganesha AR - Video & Random Audio</title>
+    <title>Ganesha AR - Video & Audio</title>
 
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -277,7 +277,7 @@
             display: none;
         }
 
-        #play-random-btn {
+        #play-audio-btn {
             background: rgba(15, 4, 0, 0.90);
             border: 1px solid var(--gold);
             color: var(--gold-light);
@@ -295,12 +295,12 @@
             gap: 8px;
         }
 
-        #play-random-btn:hover {
+        #play-audio-btn:hover {
             transform: scale(1.05);
             background: rgba(30, 8, 0, 0.95);
         }
 
-        #play-random-btn:active {
+        #play-audio-btn:active {
             transform: scale(0.95);
         }
 
@@ -334,7 +334,6 @@
 
 <body>
 
-    <!-- ── MENU ── -->
     <div id="menu">
         <div id="menu-panel">
             <div class="om">ॐ</div>
@@ -348,27 +347,23 @@
         </div>
     </div>
 
-    <!-- ── SCANNING OVERLAY ── -->
     <div id="scanning-overlay">
         <div id="scan-hint">
             <div class="scan-dot"></div>
-            <span class="scan-text">ชี้กล้องไปที่ภาพ Ganesha</span>
+            <span class="scan-text">หันกล้องไปทางพระพิฆเนศ</span>
         </div>
         <div class="scan-frame">
             <span></span><span></span><span></span><span></span>
         </div>
     </div>
 
-    <!-- ── AUDIO CONTROLS (ปุ่มกดสุ่มเสียง จะซ่อนไว้ตอนแรก) ── -->
     <div id="audio-controls">
-        <button id="play-random-btn">🔊 รับคำอวยพร / ฟังบทสวด</button>
+        <button id="play-audio-btn">🔊 รับคำอวยพร / ฟังบทสวด</button>
     </div>
-
-    <!-- ── A-Frame Scene ── -->
+    <!-- autoStart: false: สำคัญมาก เป็นการบอกว่าอย่าเพิ่งเปิดกล้องทันทีที่เข้าเว็บ (รอให้ผู้ใช้กดปุ่ม "เริ่ม AR" ก่อน ระบบถึงจะทำงาน) -->
     <a-scene id="scene" mindar-image="imageTargetSrc: mind_files/targets.mind; autoStart: false; uiScanning: no;"
         vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-
-        <!-- โหลดไฟล์วิดีโอเตรียมไว้ตรงนี้ -->
+        <!-- สร้างแท็กวิดีโอรอไว้ (สังเกตว่ายังไม่มี src เพราะโค้ด JS จะเป็นคนใส่ URL วิดีโอให้ทีหลังตามรูปที่สแกนเจอ) -->
         <a-assets>
             <video id="main-video" loop playsinline webkit-playsinline muted crossorigin="anonymous"></video>
         </a-assets>
@@ -380,26 +375,27 @@
         const scene = document.querySelector('#scene');
         let activeTarget = null;
 
-        // ── ข้อมูลวิดีโอ และ กลุ่มเสียง (สุ่มเสียง) ──
+        // ── ข้อมูลวิดีโอ และ เสียง (แก้ไขให้เก็บเสียงเดียว) ──
         const data = [
-            { target_index: 0, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 1, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 2, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 3, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 4, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 5, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 6, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 7, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 8, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 9, video_url: 'videos/AR_MOVE_SU01.mp4', audio_urls: ['audio/Silpakorn.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 10, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 11, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 12, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 13, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 14, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
-            { target_index: 15, video_url: 'videos/AR_move_Watnayang01.mp4', audio_urls: ['audio/Watnayang.mp3'], width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 0, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 1, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 2, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 3, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 4, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 5, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 6, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 7, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 8, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 9, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 10, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 11, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 12, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 13, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 14, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
+            { target_index: 15, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3', width: '1', height: '1.5', rotation: '0 0 0' },
         ];
 
+        // ฟังก์ชันนี้ทำงานทันทีที่หน้าเว็บโหลดเสร็จและทำหน้าที่ เตรียมความพร้อมให้กับระบบ
         function loadAR() {
             data.forEach(item => {
                 const entity = document.createElement('a-entity');
@@ -417,10 +413,11 @@
                 entity.appendChild(aPlane);
                 scene.appendChild(entity);
 
-                // เตรียม Element เสียงรอไว้สำหรับระบบสุ่ม
-                if (item.audio_urls && item.audio_urls.length > 0) {
+                // เตรียม Element เสียงรอไว้ (อ้างอิงจาก audio_url ตรงๆ)
+                if (item.audio_url) {
                     const audioEl = document.createElement('audio');
                     audioEl.id = `audio-${item.target_index}`;
+                    audioEl.src = item.audio_url;
                     audioEl.loop = false;
                     audioEl.preload = "auto";
                     document.body.appendChild(audioEl);
@@ -474,16 +471,12 @@
         }
 
         // ── จัดการการกดปุ่ม "✨ รับคำอวยพร / ฟังบทสวด" ──
-        document.getElementById('play-random-btn').addEventListener('click', () => {
-            if (!activeTarget || !activeTarget.audio_urls || activeTarget.audio_urls.length === 0) return;
+        document.getElementById('play-audio-btn').addEventListener('click', () => {
+            if (!activeTarget || !activeTarget.audio_url) return;
 
             const audio = document.getElementById(`audio-${activeTarget.target_index}`);
             if (audio) {
-                const randomIndex = Math.floor(Math.random() * activeTarget.audio_urls.length);
-                const randomSound = activeTarget.audio_urls[randomIndex];
-
-                audio.src = randomSound;
-                audio.currentTime = 0;
+                audio.currentTime = 0; // รีเซ็ตให้เริ่มใหม่ตั้งแต่ต้นทุกครั้งที่กด
                 audio.play().catch(e => console.error("Error playing audio:", e));
             }
         });
@@ -578,7 +571,7 @@
         // ==========================================
 
         function startMindAR() {
-            // ปลดล็อกเสียงและวิดีโอ (จำเป็นสำหรับ iOS)
+            // ปลดล็อกเสียงและวิดีโอ 
             document.querySelectorAll('audio').forEach(audio => {
                 audio.play().then(() => audio.pause()).catch(err => console.log("Unlock audio err:", err));
             });
