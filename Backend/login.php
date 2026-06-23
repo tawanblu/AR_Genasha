@@ -1,21 +1,23 @@
 <?php
 session_start();
 
+// 1. [จุดที่เพิ่ม] เช็กว่ามีข้อความแจ้งเตือนผิดพลาดฝากมาใน Session ไหม ถ้ามีให้ดึงมาใช้แล้วลบทิ้ง
+$message = "";
+if (isset($_SESSION['login_error'])) {
+    $message = $_SESSION['login_error'];
+    unset($_SESSION['login_error']);
+}
+
 if (isset($_GET['redirect'])) {
     $_SESSION['redirect_to'] = $_GET['redirect'];
 }
 require_once "../connect.php";
 /** @var mysqli $conn */
 
-
-$message = "";
-
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // รับค่าและตัดช่องว่าง
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
 
-    // ค้นหาผู้ใช้จาก username
     $sql = "SELECT * FROM accounts WHERE username = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("s", $username);
@@ -27,54 +29,43 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $user = $result->fetch_assoc();
 
-        // ตรวจสอบรหัสผ่านที่แฮชไว้
         if (password_verify($password, $user['password'])) {
 
-            // --- ส่วนที่คงไว้และปรับปรุง Session ให้ครอบคลุมทั้ง User และ Admin ---
-            $_SESSION['id_account'] = $user['id_account']; // ใช้ id_account เป็นหลักเพื่อให้ตรงกับหน้า restaurants.php
-            $_SESSION['username'] = $user['username'];
-            $_SESSION['role'] = $user['role']; // เก็บสิทธิ์ (user หรือ admin) ลง Session
+            $_SESSION['id_account'] = $user['id_account'];
+            $_SESSION['username']   = $user['username'];
+            $_SESSION['role']       = $user['role'];
 
-            // ------------------------------------------------------------------
-            // [ส่วนเดิมที่ห้ามตัด] อัปเดตเวลาเข้าสู่ระบบล่าสุด (login_date)
-            // ------------------------------------------------------------------
             $update_sql = "UPDATE accounts SET login_date = CURRENT_TIMESTAMP WHERE id_account = ?";
             $update_stmt = $conn->prepare($update_sql);
             $update_stmt->bind_param("i", $user['id_account']);
             $update_stmt->execute();
-            $update_stmt->close();
-            // ------------------------------------------------------------------
 
-            // --- [ส่วนที่เพิ่มการแยกหน้า] ห้าม User เข้า Dashboard ---
-            if ($_SESSION['role'] === 'admin') {
-                // ถ้าเป็น Admin ไปหน้า Dashboard
-                header("Location: dashboard.php");
-                exit();
-            } else {
-                // ถ้าเป็น User ทั่วไป ให้ไปหน้า Home หรือหน้า Restaurants
-                // (ถ้าไฟล์ restaurants.php อยู่ข้างนอกโฟลเดอร์ admin ให้ใช้ ../restaurants.php)
-                $_SESSION['username'] = $username;
-
-                // ตรวจสอบว่ามีการเก็บหน้าที่อยากให้กลับไป (redirect_to) ไว้ไหม
-                if (isset($_SESSION['redirect_to'])) {
-                    $redirect_url = $_SESSION['redirect_to'];
-                    unset($_SESSION['redirect_to']); // ใช้เสร็จแล้วลบทิ้งทันที
-                    header("Location: " . $redirect_url);
-                } else {
-                    // ถ้าเป็นการ Login ปกติ (ไม่ได้มาจากหน้า Review) ให้ไปหน้า Home
-                    header("Location: ../index.php");
-                }
+            if (isset($_SESSION['redirect_to'])) {
+                $redirect_url = $_SESSION['redirect_to'];
+                unset($_SESSION['redirect_to']);
+                header("Location: $redirect_url");
                 exit();
             }
-            exit;
+
+            // admin → dashboard | user → index
+            if ($user['role'] === 'admin') {
+                header("Location: dashboard.php");
+            } else {
+                header("Location: ../index.php");
+            }
+            exit();
         } else {
-            $message = "Username หรือ Password ไม่ถูกต้อง";
+            // 2. [จุดที่แก้] ฝากข้อความรหัสผิดไว้ใน Session แล้ว Redirect กลับมาหน้าเดิมเพื่อล้างค่า POST
+            $_SESSION['login_error'] = "รหัสผ่านไม่ถูกต้อง";
+            header("Location: login.php");
+            exit();
         }
     } else {
-        $message = "Username หรือ Password ไม่ถูกต้อง";
+        // 3. [จุดที่แก้] ฝากข้อความไม่พบผู้ใช้ไว้ใน Session แล้ว Redirect กลับมาหน้าเดิมเพื่อล้างค่า POST
+        $_SESSION['login_error'] = "ไม่พบผู้ใช้นี้ในระบบ";
+        header("Location: login.php");
+        exit();
     }
-
-    $stmt->close();
 }
 ?>
 
@@ -86,8 +77,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <title>Login | AR Ganesha</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
     <style>
-        /* สไตล์เดิมทั้งหมดห้ามตัดออก */
         body {
             min-height: 100vh;
             background: #ffffff;
@@ -97,7 +89,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             min-height: 100vh;
         }
 
-        /* Left Image */
         .login-image {
             background: url("../image/picganesha1.jpg") center / cover no-repeat;
             position: relative;
@@ -117,7 +108,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             padding: 50px;
         }
 
-        /* Right Form */
         .login-form {
             background: #fff;
             border: 1px solid #ccc;
@@ -129,7 +119,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             margin-bottom: 30px;
         }
 
-        /* Mobile */
         @media (max-width:768px) {
             .login-image {
                 display: none;
@@ -144,14 +133,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body>
 
-    <div class="container-fluid">
-        <div class="row login-wrapper">
+    <div class="container-fluid p-0">
+        <div class="row g-0 login-wrapper">
 
             <div class="col-md-6 login-image d-flex align-items-center">
-                <div class="login-text">
+                <div class="login-text w-100">
                     <h1 class="fw-bold">AR Ganesha</h1>
-                    <p class="mt-3">
-                        ประสบการณ์เสมือนจริงที่เชื่อมศิลปวัฒนธรรม<br>
+                    <p class="mt-3 fs-5">
+                        ประสบการณ์เสมือนจริงที่เชื่อมศิลปวัฒนธรรม
                         เข้ากับเทคโนโลยี Augmented Reality
                     </p>
                 </div>
@@ -179,7 +168,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                         <div class="mb-3">
                             <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required autocomplete="current-password">
+                            <div style="position: relative;">
+                                <input type="password" name="password" id="passwordInput" class="form-control" required autocomplete="current-password" style="padding-right: 45px;">
+                                <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; user-select: none; color: #aaa;">
+                                    <i class="fas fa-eye" id="eyeIcon"></i>
+                                </span>
+                            </div>
                         </div>
 
                         <button type="submit" class="btn btn-warning w-100 fw-bold">
@@ -192,6 +186,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
     </div>
 
+    <script>
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('passwordInput');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            if (type === 'password') {
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+                this.style.color = '#aaa';
+            } else {
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+                this.style.color = '#777';
+            }
+        });
+    </script>
 </body>
 
 </html>

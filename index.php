@@ -53,14 +53,13 @@ if (empty($all_data)) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
 
 </head>
 <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
 
-<body class="home-page" text-white">
+<body class="home-page text-white">
 
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
@@ -89,6 +88,12 @@ if (empty($all_data)) {
                                     <i class="fa-solid fa-user me-1"></i>
                                     <?= htmlspecialchars($_SESSION['username']) ?>
                                 </span>
+
+                                <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                                    <a href="Backend/dashboard.php" class="btn btn-outline-info btn-sm px-3 rounded-pill me-2">
+                                        <i class="fa-solid fa-chart-line"></i> Dashboard
+                                    </a>
+                                <?php endif; ?>
                                 <a href="logout.php" class="btn btn-outline-danger btn-sm px-3 rounded-pill">
                                     Logout
                                 </a>

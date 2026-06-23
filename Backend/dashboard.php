@@ -19,7 +19,7 @@ function getCount(mysqli $conn, string $sql)
     return $result->fetch_assoc()['total'] ?? 0;
 }
 
-function safeQuery(mysqli $conn, string $sql)
+function safeQuery($conn, $sql)
 {
     $result = $conn->query($sql);
     if (!$result) return 0;
@@ -30,14 +30,11 @@ function safeQuery(mysqli $conn, string $sql)
 // ==========================================
 // [ระบบฟิลเตอร์วันที่] ดึงค่าจากปุ่มค้นหาช่วงวัน
 // ==========================================
-
 $start_date = $_GET['start_date'] ?? '';
 $end_date = $_GET['end_date'] ?? '';
 
 $where_restaurant_reviews = "";
 $where_place_reviews = "";
-$s_date = ""; // Initialize variable
-$e_date = ""; // Initialize variable
 
 if (!empty($start_date) && !empty($end_date)) {
     $s_date = $conn->real_escape_string($start_date) . " 00:00:00";
@@ -142,7 +139,7 @@ $json_m_data = json_encode($chart_data);
             --card: #1e1e2a;
             --border: rgba(201, 168, 76, .18);
             --txt: #e8e6f0;
-            --muted: #7a7a96;
+            --muted: #a8a4c0;
             --red: #e05a5a;
             --teal: #38c9a0;
             --blue: #4d9fff;
@@ -270,6 +267,15 @@ $json_m_data = json_encode($chart_data);
         .sidebar-footer {
             padding: 16px 12px;
             border-top: 1px solid var(--border);
+        }
+
+        .sidebar-footer .nav-link {
+            color: var(--txt);
+        }
+
+        .sidebar-footer .nav-link:hover {
+            color: var(--gold);
+            background: rgba(201, 168, 76, .08);
         }
 
         .nav-link.logout {
@@ -480,7 +486,7 @@ $json_m_data = json_encode($chart_data);
 
         .ar-dashboard-row {
             display: grid;
-            grid-template-columns: 1fr 1.8fr;
+            grid-template-columns: 1fr 1fr 1.4fr;
             gap: 16px;
             margin-bottom: 32px;
         }
@@ -493,7 +499,7 @@ $json_m_data = json_encode($chart_data);
             display: flex;
             flex-direction: column;
             position: relative;
-            height: 320px;
+            height: 280px;
         }
 
         .chart-box h5 {
@@ -802,7 +808,9 @@ $json_m_data = json_encode($chart_data);
             </a>
         </nav>
         <div class="sidebar-footer">
-            <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            <<<<<<< HEAD=======<a href="../index.php" class="nav-link"><i class="bi bi-house-door-fill"></i> ไปหน้า Index</a>
+                >>>>>>> b8893e7 (update ar)
+                <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </div>
     </aside>
 
@@ -864,19 +872,34 @@ $json_m_data = json_encode($chart_data);
             <div class="section-title"><i class="bi bi-phone-fill"></i> AR Usage & Rankings</div>
         </div>
         <div class="ar-dashboard-row anim anim-6">
+            <<<<<<< HEAD
 
-            <div class="chart-box">
+                <div class="chart-box">
                 <h5><i class="bi bi-pie-chart-fill me-2"></i> การใช้งานฟีเจอร์ AR ของผู้ใช้</h5>
-                <div class="chart-container-inner">
-                    <canvas id="arUsageChart"></canvas>
+                =======
+                <div class="stat-card c-blue" style="height: 280px;">
+                    <div class="stat-icon-wrap"><i class="bi bi-phone"></i></div>
+                    <div class="stat-label">AR Usage</div>
+                    <div class="stat-number"><?= number_format($countARStart) ?></div>
+                    <i class="bi bi-phone bg-icon"></i>
                 </div>
-            </div>
-            <div class="chart-box">
-                <h5><i class="bi bi-bar-chart-fill me-2"></i> โมเดลองค์พระที่ถูกดูมากที่สุด </h5>
-                <div class="chart-container-inner">
-                    <canvas id="arBarChart"></canvas>
+                <div class="chart-box">
+                    <h5><i class="bi bi-pie-chart-fill me-2"></i> สัดส่วนพฤติกรรม AR</h5>
+                    >>>>>>> b8893e7 (update ar)
+                    <div class="chart-container-inner">
+                        <canvas id="arUsageChart"></canvas>
+                    </div>
                 </div>
-            </div>
+                <div class="chart-box">
+                    <<<<<<< HEAD
+                        <h5><i class="bi bi-bar-chart-fill me-2"></i> โมเดลองค์พระที่ถูกดูมากที่สุด </h5>
+                        =======
+                        <h5><i class="bi bi-bar-chart-fill me-2"></i> องค์พระที่ถูกส่องมากที่สุด (Top 5)</h5>
+                        >>>>>>> b8893e7 (update ar)
+                        <div class="chart-container-inner">
+                            <canvas id="arBarChart"></canvas>
+                        </div>
+                </div>
         </div>
 
         <div class="section-head anim anim-6">
@@ -1090,7 +1113,11 @@ $json_m_data = json_encode($chart_data);
         });
 
         // Bar Chart: Top 5 Ganesha
+        // ==========================================
+        // แก้ไขสคริปต์กราฟแท่ง (arBarChart) ให้แท่งกลับมาโชว์ถูกต้อง
+        // ==========================================
         <?php
+        // เตรียมข้อมูลสำหรับกราฟแท่งแบบปลอดภัย 100% บนฝั่ง PHP
         $clean_labels = [];
         $clean_data = [];
 
@@ -1098,6 +1125,7 @@ $json_m_data = json_encode($chart_data);
             $clean_labels = $labels_ar;
             $clean_data = $dataViews_ar;
         } else {
+            // ถ้าไม่มีข้อมูลจริง ให้ใส่ค่าเริ่มต้นไว้เป็นแนวทางไม่ให้กราฟพัง
             $clean_labels = ["ไม่มีข้อมูล"];
             $clean_data = [0];
         }
@@ -1111,33 +1139,36 @@ $json_m_data = json_encode($chart_data);
             data: {
                 labels: <?= $js_labels ?>,
                 datasets: [{
-                    label: 'จำนวนครั้งที่ใช้ฟีเจอร์ AR',
+                    label: 'จำนวนครั้งที่ส่อง',
                     data: <?= $js_data ?>,
-                    backgroundColor: 'rgba(201, 168, 76, 0.5)',
-                    borderColor: '#c9a84c',
+                    // กำหนดสีให้ 2 แท่งแตกต่างกัน (สีทอง และ สีม่วง)
+                    backgroundColor: [
+                        'rgba(201, 168, 76, 0.5)', // สีของแท่งที่ 1
+                        'rgba(155, 114, 207, 0.5)' // สีของแท่งที่ 2
+                    ],
+                    borderColor: [
+                        '#c9a84c', // ขอบสีของแท่งที่ 1
+                        '#9b72cf' // ขอบสีของแท่งที่ 2
+                    ],
                     borderWidth: 1,
                     borderRadius: 4
                 }]
             },
             options: {
-                indexAxis: 'y',
+                indexAxis: 'y', // <--- เปิดใช้งานกราฟแท่งแนวนอน
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    // แกน X คือแกนที่แสดงจำนวนตัวเลข (เพราะกราฟแนวนอน)
-                    x: {
+                    x: { // เปลี่ยนมาตั้งค่าสเกลที่แกน X แทน
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(255, 255, 255, 0.05)'
                         },
                         ticks: {
-                            color: '#7a7a96',
-                            precision: 0, // บังคับให้แกน X ไม่มีทศนิยม
-                            stepSize: 1 // ให้กราฟขยับทีละ 1
+                            color: '#7a7a96'
                         }
                     },
-                    // แกน Y คือชื่อโมเดลพระ
-                    y: {
+                    y: { // เปลี่ยนแกน Y เป็นการแสดงชื่อองค์พระ
                         grid: {
                             display: false
                         },
@@ -1149,7 +1180,6 @@ $json_m_data = json_encode($chart_data);
                         }
                     }
                 },
-                // ย้าย plugins ออกมาให้อยู่ระดับเดียวกับ scales
                 plugins: {
                     legend: {
                         display: false
@@ -1182,10 +1212,6 @@ $json_m_data = json_encode($chart_data);
                         beginAtZero: true,
                         grid: {
                             color: 'rgba(255,255,255,0.05)'
-                        },
-                        ticks: {
-                            precision: 0, // เพิ่ม precision: 0 ให้แกน Y ของจำนวนรีวิวด้วย
-                            stepSize: 1
                         }
                     },
                     x: {

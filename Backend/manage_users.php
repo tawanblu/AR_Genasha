@@ -100,7 +100,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             --card: #1e1e2a;
             --border: rgba(201, 168, 76, .18);
             --txt: #e8e6f0;
-            --muted: #7a7a96;
+            --muted: #a8a4c0;
             --red: #e05a5a;
             --blue: #4d9fff;
             --red-dim: rgba(224, 90, 90, .12);
@@ -220,6 +220,15 @@ $adminNav = basename($_SERVER['PHP_SELF']);
         .sidebar-footer {
             padding: 16px 12px;
             border-top: 1px solid var(--border);
+        }
+
+        .sidebar-footer .nav-link {
+            color: var(--txt);
+        }
+
+        .sidebar-footer .nav-link:hover {
+            color: var(--gold);
+            background: rgba(201, 168, 76, .08);
         }
 
         .nav-link.logout {
@@ -489,6 +498,7 @@ $adminNav = basename($_SERVER['PHP_SELF']);
             <a href="manage_reviews.php" class="nav-link <?= $adminNav === 'manage_reviews.php' ? 'active' : '' ?>"><i class="bi bi-star-fill"></i> Reviews</a>
         </nav>
         <div class="sidebar-footer">
+            <a href="../index.php" class="nav-link"><i class="bi bi-house-door-fill"></i> ไปหน้า Index</a>
             <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </div>
     </aside>

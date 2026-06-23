@@ -2,7 +2,6 @@
 require_once "../connect.php";
 /** @var mysqli $conn */
 
-
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $username = trim($_POST['username']);
@@ -27,10 +26,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit();
     }
 
-    // ตรวจสอบความยาวรหัสผ่าน
-    if (strlen($password) < 6) {
+    // ตรวจสอบความแข็งแกร่งของรหัสผ่าน (Server-side Backup เผื่อกรณี JS ไม่ทำงาน)
+    $uppercase = preg_match('@[A-Z]@', $password);
+    $number    = preg_match('@[0-9]@', $password);
+    $specialChars = preg_match('@[^\w]@', $password);
+
+    if (!$uppercase || !$number || !$specialChars || strlen($password) < 6) {
         echo "<script>
-                alert('รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
+                alert('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร รวมถึงต้องมีตัวพิมพ์ใหญ่ (A-Z), ตัวเลข (0-9) และอักขระพิเศษ อย่างน้อย 1 ตัว');
                 window.history.back();
               </script>";
         exit();
@@ -82,6 +85,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../style.css">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
 <body class="login-body">
@@ -94,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             background-position: center; 
             background-repeat: no-repeat; 
             min-height: 100vh;
-            color: white; /* เปลี่ยนสี text เป็นสีขาว */
+            color: white;
             position: relative;">
 
             <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1;"></div>
@@ -108,7 +112,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
         </div>
 
-
         <div class="login-right">
 
             <div class="login-form-box">
@@ -120,18 +123,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                 <h2>Register AR Ganesha</h2>
 
-                <form method="post">
-
-                    <label>Username</label>
-                    <input type="text" name="username" class="form-control" placeholder="Username" required>
+                <form method="post" id="registerForm">
 
                     <label>Email</label>
                     <input type="email" name="email" class="form-control" placeholder="Email" required>
 
-                    <label>Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                    <label>Username</label>
+                    <input type="text" name="username" class="form-control" placeholder="Username" required>
 
-                    <button type="submit" class="btn btn-register">
+                    <label>Password</label>
+                    <div style="position: relative;">
+                        <input type="password" name="password" id="passwordInput" class="form-control" placeholder="Password" required style="padding-right: 45px;">
+                        <span id="togglePassword" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; user-select: none; color: #aaa;">
+                            <i class="fas fa-eye" id="eyeIcon"></i>
+                        </span>
+                    </div>
+
+                    <small id="passwordError" style="color: #aaa; display: block; margin-top: 5px; font-size: 0.85rem; transition: color 0.3s;">
+                        * รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร, มีตัวพิมพ์ใหญ่, ตัวเลข และอักขระพิเศษอย่างน้อย 1 ตัว
+                    </small>
+
+                    <button type="submit" class="btn btn-register" style="margin-top: 15px;">
                         Sign Up
                     </button>
 
@@ -143,6 +155,67 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     </div>
 
+    <script>
+        // ระบบเปิด/ปิดตา
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('passwordInput');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            if (type === 'password') {
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+                this.style.color = '#aaa';
+            } else {
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+                this.style.color = '#777';
+            }
+        });
+
+        // ระบบตรวจสอบความปลอดภัยของรหัสผ่านแบบ Real-time
+        const registerForm = document.getElementById('registerForm');
+        const passwordError = document.getElementById('passwordError');
+
+        // ฟังก์ชันเช็คเงื่อนไขรหัสผ่าน
+        function isValidPassword(password) {
+            const hasUpperCase = /[A-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecialChar = /[^\w]/.test(password);
+            return password.length >= 6 && hasUpperCase && hasNumber && hasSpecialChar;
+        }
+
+        // ตรวจสอบทันทีที่ผู้ใช้กำลังพิมพ์ (Real-time)
+        passwordInput.addEventListener('input', function() {
+            const passwordVal = this.value;
+            passwordInput.style.borderColor = ''; // คืนค่ากรอบเดิมเสมอเวลาพิมพ์ใหม่
+
+            if (passwordVal === '') {
+                // ถ้าลบจนว่างเปล่า ให้กลับไปเป็นสีเทา
+                passwordError.style.color = '#aaa';
+            } else if (!isValidPassword(passwordVal)) {
+                // ถ้าพิมพ์แล้วแต่ยังผิดเงื่อนไข ให้ตัวหนังสือเป็นสีแดง
+                passwordError.style.color = '#e05a5a';
+            } else {
+                // ถ้าเงื่อนไขครบถ้วน เปลี่ยนเป็นสีเขียว
+                passwordError.style.color = '#38c9a0';
+            }
+        });
+
+        // ดักจับตอนกดปุ่ม Sign Up ขั้นสุดท้าย
+        registerForm.addEventListener('submit', function(e) {
+            const passwordVal = passwordInput.value;
+
+            if (!isValidPassword(passwordVal)) {
+                e.preventDefault(); // ยกเลิกการส่งข้อมูล
+                passwordError.style.color = '#e05a5a'; // ข้อความแดง
+                passwordInput.style.borderColor = '#e05a5a'; // กรอบแดง
+            }
+        });
+    </script>
 </body>
 
 </html>
