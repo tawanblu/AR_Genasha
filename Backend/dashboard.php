@@ -10,7 +10,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
 
 $adminNav = basename($_SERVER['PHP_SELF']);
 
-function getCount(mysqli $conn, string $sql)
+function getCount($conn, $sql)
 {
     $result = $conn->query($sql);
     if (!$result) {
@@ -808,9 +808,8 @@ $json_m_data = json_encode($chart_data);
             </a>
         </nav>
         <div class="sidebar-footer">
-            <<<<<<< HEAD=======<a href="../index.php" class="nav-link"><i class="bi bi-house-door-fill"></i> ไปหน้า Index</a>
-                >>>>>>> b8893e7 (update ar)
-                <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            <a href="../index.php" class="nav-link"><i class="bi bi-house-door-fill"></i> ไปหน้า Index</a>
+            <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
         </div>
     </aside>
 
@@ -872,34 +871,24 @@ $json_m_data = json_encode($chart_data);
             <div class="section-title"><i class="bi bi-phone-fill"></i> AR Usage & Rankings</div>
         </div>
         <div class="ar-dashboard-row anim anim-6">
-            <<<<<<< HEAD
-
-                <div class="chart-box">
-                <h5><i class="bi bi-pie-chart-fill me-2"></i> การใช้งานฟีเจอร์ AR ของผู้ใช้</h5>
-                =======
-                <div class="stat-card c-blue" style="height: 280px;">
-                    <div class="stat-icon-wrap"><i class="bi bi-phone"></i></div>
-                    <div class="stat-label">AR Usage</div>
-                    <div class="stat-number"><?= number_format($countARStart) ?></div>
-                    <i class="bi bi-phone bg-icon"></i>
+            <div class="stat-card c-blue" style="height: 280px;">
+                <div class="stat-icon-wrap"><i class="bi bi-phone"></i></div>
+                <div class="stat-label">AR Usage</div>
+                <div class="stat-number"><?= number_format($countARStart) ?></div>
+                <i class="bi bi-phone bg-icon"></i>
+            </div>
+            <div class="chart-box">
+                <h5><i class="bi bi-pie-chart-fill me-2"></i> สัดส่วนพฤติกรรม AR</h5>
+                <div class="chart-container-inner">
+                    <canvas id="arUsageChart"></canvas>
                 </div>
-                <div class="chart-box">
-                    <h5><i class="bi bi-pie-chart-fill me-2"></i> สัดส่วนพฤติกรรม AR</h5>
-                    >>>>>>> b8893e7 (update ar)
-                    <div class="chart-container-inner">
-                        <canvas id="arUsageChart"></canvas>
-                    </div>
+            </div>
+            <div class="chart-box">
+                <h5><i class="bi bi-bar-chart-fill me-2"></i> องค์พระที่ถูกส่องมากที่สุด (Top 5)</h5>
+                <div class="chart-container-inner">
+                    <canvas id="arBarChart"></canvas>
                 </div>
-                <div class="chart-box">
-                    <<<<<<< HEAD
-                        <h5><i class="bi bi-bar-chart-fill me-2"></i> โมเดลองค์พระที่ถูกดูมากที่สุด </h5>
-                        =======
-                        <h5><i class="bi bi-bar-chart-fill me-2"></i> องค์พระที่ถูกส่องมากที่สุด (Top 5)</h5>
-                        >>>>>>> b8893e7 (update ar)
-                        <div class="chart-container-inner">
-                            <canvas id="arBarChart"></canvas>
-                        </div>
-                </div>
+            </div>
         </div>
 
         <div class="section-head anim anim-6">
