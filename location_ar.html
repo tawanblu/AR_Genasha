@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ganesha AR - Video & Audio</title>
 
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
@@ -31,14 +31,18 @@
             padding: 0;
         }
 
-        body {
+        body,
+        html {
             overflow: hidden;
             background: var(--deep);
             font-family: 'Sarabun', sans-serif;
             color: var(--gold-light);
+            width: 100%;
+            height: 100%;
+            position: fixed;
         }
 
-        /* ── แก้กล้องไม่เต็มจอ: แยก a-scene กับ canvas ออกจากกัน ── */
+        /* บังคับ A-Frame, Canvas และ Video ให้ขยายเต็มจอแบบ Cover ไร้ขอบดำและโปร่งใส */
         a-scene {
             position: fixed !important;
             inset: 0 !important;
@@ -49,15 +53,15 @@
         a-scene canvas {
             width: 100% !important;
             height: 100% !important;
+            object-fit: cover !important;
             background: transparent !important;
         }
 
-        /* ── ป้องกันสีน้ำตาล A-Frame ขณะโหลด ── */
-        .a-canvas {
-            background: transparent !important;
+        video {
+            object-fit: cover !important;
         }
 
-        /* ── ซ่อน UI และ Mask สีน้ำตาลที่ติดมากับระบบสแกน MindAR ── */
+        /* ซ่อน UI และ Mask สีน้ำตาลที่ติดมากับระบบสแกน MindAR */
         .mindar-ui-scanning,
         .mindar-ui-mask {
             display: none !important;
@@ -136,6 +140,7 @@
             margin-bottom: 22px;
         }
 
+        /* 🌟 ปุ่ม Start ปรับให้พร้อมใช้งานทันที */
         #start-btn {
             width: 100%;
             padding: 16px 24px;
@@ -158,15 +163,7 @@
         }
 
         #start-btn:active {
-            transform: translateY(0);
-        }
-
-        #start-btn:disabled {
-            background: linear-gradient(135deg, #2a2420, #1a1410);
-            border-color: rgba(212, 168, 67, 0.10);
-            color: rgba(253, 240, 208, 0.28);
-            cursor: not-allowed;
-            box-shadow: none;
+            transform: scale(0.95);
         }
 
         #how-to-btn,
@@ -198,6 +195,7 @@
             letter-spacing: 0.04em;
             margin-top: 14px;
             min-height: 1.2em;
+            text-align: center;
         }
 
         /* ═══════════ BACK BUTTON (IN AR) ═══════════ */
@@ -490,13 +488,17 @@
             <div class="om">ॐ</div>
             <div class="title">Ganesha AR</div>
             <p class="desc">
-                [โหมดทดสอบ] สามารถใช้งานได้ทุกที่<br>
-                กดเริ่ม AR เพื่อเปิดกล้องสแกน
+                [โหมดทดสอบ] สามารถเปิดกล้องใช้งานได้ทันที<br>
+                จากทุกพื้นที่
             </p>
+
             <button id="start-btn" onclick="startMindAR()">✦ เริ่ม AR</button>
+
             <button id="how-to-btn" onclick="openInstructionsFromMenu()">❔ วิธีการใช้งาน</button>
+
             <a href="index.php" id="exit-btn" style="text-decoration: none;">🏠 กลับสู่หน้าเว็บไซต์หลัก</a>
-            <div id="location-status">โหมดทดสอบ: ปิดการล็อกพิกัด</div>
+
+            <div id="location-status">สถานะ: ปิดการตรวจสอบ GPS ชั่วคราว</div>
         </div>
     </div>
 
@@ -514,10 +516,11 @@
             </div>
 
             <ul class="inst-list">
-                <li><strong>อนุญาต</strong> ให้เบราว์เซอร์เข้าถึงกล้องของคุณ</li>
+                <li>กดปุ่ม <strong>"✦ เริ่ม AR"</strong> เพื่อเปิดกล้อง</li>
+                <li>อนุญาตให้เบราว์เซอร์เข้าถึงกล้อง</li>
                 <li>หันกล้องไปที่ <strong>องค์พระพิฆเนศ</strong></li>
-                <li>กรุณารอสักครู่เพื่อให้ระบบแสดงผลวิดีโอโมเดล AR ขึ้นมา</li>
-                <li>กดปุ่ม <strong>"รับคำอวยพร / ฟังบทสวด"</strong> ด้านล่างเพื่อเล่นเสียง</li>
+                <li>รอระบบแสดงผลวิดีโอโมเดล AR ขึ้นมาทับ</li>
+                <li>กดปุ่ม <strong>"🔊 เล่น / หยุดรับคำอวยพร"</strong> เพื่อเล่นเสียง</li>
             </ul>
             <button id="understand-btn" onclick="closeInstructions()">เข้าใจแล้ว</button>
         </div>
@@ -534,25 +537,23 @@
     </div>
 
     <div id="audio-controls">
-        <button id="play-audio-btn">🔊 รับคำอวยพร / ฟังบทสวด</button>
+        <button id="play-audio-btn">🔊 เล่น / หยุดรับคำอวยพร</button>
     </div>
 
-    <!-- เพิ่ม background="color: #0f0400" เพื่อป้องกันสีน้ำตาลขณะโหลด -->
     <a-scene id="scene" mindar-image="imageTargetSrc: mind_files/alltargets.mind; autoStart: false; uiScanning: no;"
-        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" background="color: #0f0400">
-
+        vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-assets>
             <video id="main-video" loop playsinline webkit-playsinline muted crossorigin="anonymous"></video>
         </a-assets>
-
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     </a-scene>
 
     <script>
         const scene = document.querySelector('#scene');
         let activeTarget = null;
+        let lostTimer = null; // ตัวแปรหน่วงเวลารีเซ็ต (30 วินาที)
 
-        // ── ข้อมูลวิดีโอ และ เสียง (36 target) ──
+        // ── ข้อมูลวิดีโอ และ เสียง (รวม 36 targets) ──
         const data = [
             { target_index: 0, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3' },
             { target_index: 1, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3' },
@@ -592,17 +593,14 @@
             { target_index: 35, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3' }
         ];
 
-        // ฟังก์ชันนี้ทำงานทันทีที่หน้าเว็บโหลดเสร็จและเตรียมความพร้อม
         function loadAR() {
             data.forEach(item => {
                 const entity = document.createElement('a-entity');
                 entity.setAttribute('mindar-image-target', `targetIndex: ${item.target_index}`);
 
-                // สร้างแผ่นสี่เหลี่ยม (Plane) สำหรับแสดงวิดีโอ
                 const aPlane = document.createElement('a-plane');
-                aPlane.setAttribute('width', item.width || '1');
-                aPlane.setAttribute('height', item.height || '1.5');
-                aPlane.setAttribute('rotation', item.rotation || '0 0 0');
+                aPlane.setAttribute('width', '1');
+                aPlane.setAttribute('height', '1.5');
                 aPlane.setAttribute('material', 'shader: flat; src: #main-video; transparent: true');
                 aPlane.setAttribute('visible', 'false');
                 aPlane.classList.add('video-plane');
@@ -610,7 +608,6 @@
                 entity.appendChild(aPlane);
                 scene.appendChild(entity);
 
-                // เตรียม Element เสียงรอไว้
                 if (item.audio_url) {
                     const audioEl = document.createElement('audio');
                     audioEl.id = `audio-${item.target_index}`;
@@ -620,159 +617,161 @@
                     document.body.appendChild(audioEl);
                 }
 
-                // เมื่อสแกนเจอภาพ
-                entity.addEventListener('targetFound', async () => {
+                // ── เมื่อสแกนเจอภาพ ──
+                entity.addEventListener('targetFound', () => {
                     document.getElementById('scanning-overlay').style.display = 'none';
                     document.getElementById('audio-controls').style.display = 'block';
-                    activeTarget = item;
+
+                    // ยกเลิก timer รีเซ็ต หากสแกนเจอภาพกลับมาภายใน 30 วินาที
+                    if (lostTimer) {
+                        clearTimeout(lostTimer);
+                        lostTimer = null;
+                    }
 
                     const v = document.querySelector('#main-video');
                     const plane = entity.querySelector('.video-plane');
 
-                    if (!v.src.endsWith(item.video_url)) {
+                    // เล่นต่อจากวินาทีเดิมทันที ไม่มีการโหลด (load()) ซ้ำ
+                    if (v.src.endsWith(item.video_url)) {
+                        if (v.paused) v.play().catch(err => console.error(err));
+                    } else {
                         v.src = item.video_url;
                         v.load();
+                        v.play().catch(err => console.error(err));
                     }
 
+                    activeTarget = item;
                     v.muted = true;
-
-                    try {
-                        await v.play();
-                    } catch (err) {
-                        console.error("Video play error:", err);
-                    }
-
                     plane.setAttribute('visible', 'true');
+
+                    // เล่นเสียงต่อจากจุดเดิม (ถ้าก่อนหลุดกำลังเล่นอยู่)
+                    if (activeTarget && activeTarget.audio_url) {
+                        const audio = document.getElementById(`audio-${activeTarget.target_index}`);
+                        if (audio && audio.dataset.wasPlaying === "true") {
+                            audio.play().catch(err => console.error(err));
+                        }
+                    }
                 });
 
-                // เมื่อหลุดโฟกัส
+                // ── เมื่อหลุดโฟกัส ──
                 entity.addEventListener('targetLost', () => {
                     document.getElementById('scanning-overlay').style.display = 'flex';
                     document.getElementById('audio-controls').style.display = 'none';
 
                     const v = document.querySelector('#main-video');
-                    v.pause();
+                    v.pause(); // พักวิดีโอไว้ชั่วคราว
 
                     document.querySelectorAll('.video-plane').forEach(p => p.setAttribute('visible', 'false'));
 
                     if (activeTarget) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                         if (audio) {
-                            audio.pause();
-                            audio.currentTime = 0;
+                            if (!audio.paused) {
+                                audio.pause(); // พักเสียง
+                                audio.dataset.wasPlaying = "true"; // บันทึกสถานะว่าเล่นค้างอยู่
+                            } else {
+                                audio.dataset.wasPlaying = "false";
+                            }
                         }
                     }
-                    activeTarget = null;
+
+                    // หน่วงเวลา 30 วินาที ก่อนที่จะทำการรีเซ็ตค่าเวลาวิดีโอและเสียงให้กลับไปเป็น 0
+                    lostTimer = setTimeout(() => {
+                        const videoReset = document.querySelector('#main-video');
+                        if (videoReset) videoReset.currentTime = 0;
+
+                        if (activeTarget) {
+                            const audio = document.getElementById(`audio-${activeTarget.target_index}`);
+                            if (audio) {
+                                audio.pause();
+                                audio.currentTime = 0; // รีเซ็ตเสียง
+                                audio.dataset.wasPlaying = "false";
+                            }
+                            activeTarget = null;
+                        }
+                        lostTimer = null;
+                    }, 30000); // 30 วินาที
                 });
             });
         }
 
-        // ปุ่มเล่นเสียง
+        // ปุ่มเล่น/หยุดเสียง (Toggle Play/Pause)
         document.getElementById('play-audio-btn').addEventListener('click', () => {
-            if (!activeTarget || !activeTarget.audio_url) return;
-
-            const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-            if (audio) {
-                audio.currentTime = 0;
-                audio.play().catch(e => console.error("Error playing audio:", e));
+            if (activeTarget) {
+                const audio = document.getElementById(`audio-${activeTarget.target_index}`);
+                if (audio) {
+                    if (audio.paused) {
+                        audio.play();
+                        audio.dataset.wasPlaying = "true";
+                    } else {
+                        audio.pause();
+                        audio.dataset.wasPlaying = "false";
+                    }
+                }
             }
         });
 
-        let toastTimer;
         function showToast(msg) {
-            clearTimeout(toastTimer);
-            document.querySelector('.toast')?.remove();
             const t = document.createElement('div');
-            t.className = 'toast';
-            t.textContent = msg;
+            t.className = 'toast'; t.textContent = msg;
             document.body.appendChild(t);
-            requestAnimationFrame(() => t.classList.add('show'));
-            toastTimer = setTimeout(() => {
-                t.classList.remove('show');
-                setTimeout(() => t.remove(), 400);
-            }, 4500);
+            setTimeout(() => t.classList.add('show'), 10);
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
         }
 
-        // เปิดป๊อปอัปแนะนำวิธีการใช้งาน (กดจากเมนู)
-        function openInstructionsFromMenu() {
-            document.getElementById('instruction-popup').style.display = 'flex';
-        }
+        // UI Functions
+        function openInstructionsFromMenu() { document.getElementById('instruction-popup').style.display = 'flex'; }
 
-        // ปิดหน้าต่างแนะนำ และหยุดวิดีโอ (กลับสู่เมนูหลักตามเดิม)
         function closeInstructions() {
             document.getElementById('instruction-popup').style.display = 'none';
-
             const tutorialVideo = document.getElementById('tutorial-video');
-            if (tutorialVideo) {
-                tutorialVideo.pause();
-                tutorialVideo.currentTime = 0;
-            }
+            if (tutorialVideo) { tutorialVideo.pause(); tutorialVideo.currentTime = 0; }
         }
 
-        // เริ่ม AR: ข้ามป๊อปอัป ซ่อนเมนู แล้วเปิดกล้องทันที
         function startMindAR() {
-            document.querySelectorAll('audio').forEach(audio => {
-                audio.play().then(() => audio.pause()).catch(err => console.log("Unlock audio err:", err));
-            });
+            document.querySelectorAll('audio').forEach(a => { a.play().then(() => a.pause()).catch(() => { }); });
             const v = document.querySelector('#main-video');
             v.play().then(() => v.pause()).catch(() => { });
 
-            // ซ่อนเมนู
             const menu = document.getElementById('menu');
             menu.classList.add('hide');
             setTimeout(() => menu.style.display = 'none', 650);
 
-            // โชว์กรอบสแกนและปุ่มย้อนกลับ
             document.getElementById('scanning-overlay').style.display = 'flex';
             document.getElementById('back-btn').style.display = 'flex';
 
-            // เริ่มเปิดกล้อง MindAR
-            const tryStart = () => {
-                const sys = scene.systems['mindar-image-system'];
-                sys ? sys.start() : console.error('MindAR not ready');
-            };
-            scene.hasLoaded ? tryStart() : scene.addEventListener('loaded', tryStart);
+            const sys = scene.systems['mindar-image-system'];
+            sys ? sys.start() : scene.addEventListener('loaded', () => scene.systems['mindar-image-system'].start());
         }
 
-        // ฟังก์ชันกดปุ่มย้อนกลับหน้าหลัก
         function backToMenu() {
-            // หยุดระบบ MindAR (กล้อง)
             const sys = scene.systems['mindar-image-system'];
             if (sys) sys.stop();
-
-            // หยุดวิดีโอที่อาจจะเล่นค้างอยู่
             const v = document.querySelector('#main-video');
             if (v) v.pause();
 
-            // หยุด/เคลียร์เสียงและสถานะเป้าหมาย
-            if (activeTarget) {
-                const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-                if (audio) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                }
-                activeTarget = null;
+            if (lostTimer) {
+                clearTimeout(lostTimer);
+                lostTimer = null;
             }
 
-            // ซ่อน UI องค์ประกอบหน้า AR
+            if (activeTarget) {
+                const audio = document.getElementById(`audio-${activeTarget.target_index}`);
+                if (audio) { audio.pause(); audio.currentTime = 0; delete audio.dataset.wasPlaying; }
+                activeTarget = null;
+            }
             document.getElementById('scanning-overlay').style.display = 'none';
             document.getElementById('audio-controls').style.display = 'none';
             document.getElementById('back-btn').style.display = 'none';
-
-            // ซ่อนแผ่นวิดีโอ AR ทั้งหมด
             document.querySelectorAll('.video-plane').forEach(p => p.setAttribute('visible', 'false'));
-
-            // นำหน้าเมนูหลักกลับมาแสดง
             const menu = document.getElementById('menu');
             menu.style.display = 'flex';
-            requestAnimationFrame(() => {
-                menu.classList.remove('hide');
-            });
+            setTimeout(() => menu.classList.remove('hide'), 10);
         }
 
-        window.onload = () => {
-            loadAR();
-        };
+        // ทำงานเมื่อโหลดหน้าเว็บเสร็จ
+        loadAR();
+
     </script>
 </body>
 
