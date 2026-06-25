@@ -140,7 +140,6 @@
             margin-bottom: 22px;
         }
 
-        /* 🌟 ปุ่ม Start ปรับให้พร้อมใช้งานทันที */
         #start-btn {
             width: 100%;
             padding: 16px 24px;
@@ -487,18 +486,15 @@
         <div id="menu-panel">
             <div class="om">ॐ</div>
             <div class="title">Ganesha AR</div>
-            <p class="desc">
-                [โหมดทดสอบ] สามารถเปิดกล้องใช้งานได้ทันที<br>
-                จากทุกพื้นที่
-            </p>
+            <p class="desc">กรุณาตรวจสอบตำแหน่ง GPS<br>เพื่อเริ่มต้นประสบการณ์ AR</p>
 
-            <button id="start-btn" onclick="startMindAR()">✦ เริ่ม AR</button>
+            <button id="start-btn" onclick="checkLocationAuto()"> ตรวจสอบตำแหน่ง</button>
 
             <button id="how-to-btn" onclick="openInstructionsFromMenu()">❔ วิธีการใช้งาน</button>
 
-            <a href="index.php" id="exit-btn" style="text-decoration: none;">🏠 กลับสู่หน้าเว็บไซต์หลัก</a>
+            <a href="index.php" id="exit-btn" style="text-decoration: none;">กลับสู่หน้าเว็บไซต์หลัก</a>
 
-            <div id="location-status">สถานะ: ปิดการตรวจสอบ GPS ชั่วคราว</div>
+            <div id="location-status">กรุณากดตรวจสอบตำแหน่งก่อนใช้งาน</div>
         </div>
     </div>
 
@@ -510,17 +506,18 @@
 
             <div class="tutorial-video-container">
                 <video id="tutorial-video" controls playsinline preload="metadata">
-                    <source src="videos/how_to_use.mp4" type="video/mp4">
+                    <source src="videos/0000.mp4" type="video/mp4">
                     เบราว์เซอร์ของคุณไม่รองรับการเล่นวิดีโอ
                 </video>
             </div>
 
             <ul class="inst-list">
-                <li>กดปุ่ม <strong>"✦ เริ่ม AR"</strong> เพื่อเปิดกล้อง</li>
-                <li>อนุญาตให้เบราว์เซอร์เข้าถึงกล้อง</li>
-                <li>หันกล้องไปที่ <strong>องค์พระพิฆเนศ</strong></li>
-                <li>รอระบบแสดงผลวิดีโอโมเดล AR ขึ้นมาทับ</li>
-                <li>กดปุ่ม <strong>"🔊 เล่น / หยุดรับคำอวยพร"</strong> เพื่อเล่นเสียง</li>
+                <li>กดปุ่ม <strong>"ตรวจสอบตำแหน่ง"</strong> เพื่อเช็กว่าคุณอยู่ในพื้นที่ที่กำหนดหรือไม่ (หากไม่อยู่
+                    จะไม่สามารถใช้งานได้)</li>
+                <li>เมื่อผ่านเงื่อนไข ปุ่มจะเปลี่ยนเป็น <strong>"✦ เริ่ม AR"</strong> ให้กดเพื่อเปิดกล้อง</li>
+                <li>หันกล้องไปที่ <strong>องค์พระพิฆเนศ</strong> และรอโหลดสักครู่</li>
+                <li>เมื่อโหลดเสร็จ วิดีโอโมเดลพระพิฆเนศแบบขยับได้จะแสดงขึ้นมาซ้อนทับสถานที่</li>
+                <li>กดปุ่ม <strong>" เล่น / หยุดรับคำอวยพร"</strong> เพื่อรับฟังเสียง</li>
             </ul>
             <button id="understand-btn" onclick="closeInstructions()">เข้าใจแล้ว</button>
         </div>
@@ -622,7 +619,6 @@
                     document.getElementById('scanning-overlay').style.display = 'none';
                     document.getElementById('audio-controls').style.display = 'block';
 
-                    // ยกเลิก timer รีเซ็ต หากสแกนเจอภาพกลับมาภายใน 30 วินาที
                     if (lostTimer) {
                         clearTimeout(lostTimer);
                         lostTimer = null;
@@ -631,7 +627,6 @@
                     const v = document.querySelector('#main-video');
                     const plane = entity.querySelector('.video-plane');
 
-                    // เล่นต่อจากวินาทีเดิมทันที ไม่มีการโหลด (load()) ซ้ำ
                     if (v.src.endsWith(item.video_url)) {
                         if (v.paused) v.play().catch(err => console.error(err));
                     } else {
@@ -644,7 +639,6 @@
                     v.muted = true;
                     plane.setAttribute('visible', 'true');
 
-                    // เล่นเสียงต่อจากจุดเดิม (ถ้าก่อนหลุดกำลังเล่นอยู่)
                     if (activeTarget && activeTarget.audio_url) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                         if (audio && audio.dataset.wasPlaying === "true") {
@@ -659,7 +653,7 @@
                     document.getElementById('audio-controls').style.display = 'none';
 
                     const v = document.querySelector('#main-video');
-                    v.pause(); // พักวิดีโอไว้ชั่วคราว
+                    v.pause();
 
                     document.querySelectorAll('.video-plane').forEach(p => p.setAttribute('visible', 'false'));
 
@@ -667,15 +661,14 @@
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                         if (audio) {
                             if (!audio.paused) {
-                                audio.pause(); // พักเสียง
-                                audio.dataset.wasPlaying = "true"; // บันทึกสถานะว่าเล่นค้างอยู่
+                                audio.pause();
+                                audio.dataset.wasPlaying = "true";
                             } else {
                                 audio.dataset.wasPlaying = "false";
                             }
                         }
                     }
 
-                    // หน่วงเวลา 30 วินาที ก่อนที่จะทำการรีเซ็ตค่าเวลาวิดีโอและเสียงให้กลับไปเป็น 0
                     lostTimer = setTimeout(() => {
                         const videoReset = document.querySelector('#main-video');
                         if (videoReset) videoReset.currentTime = 0;
@@ -684,15 +677,64 @@
                             const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                             if (audio) {
                                 audio.pause();
-                                audio.currentTime = 0; // รีเซ็ตเสียง
+                                audio.currentTime = 0;
                                 audio.dataset.wasPlaying = "false";
                             }
                             activeTarget = null;
                         }
                         lostTimer = null;
-                    }, 30000); // 30 วินาที
+                    }, 30000);
                 });
             });
+        }
+
+        // ระบบพิกัด GPS
+        const TARGET_LAT = 13.895402;
+        const TARGET_LNG = 100.5621089;
+        const MAX_DISTANCE = 1000000;
+        function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function checkLocationAuto() {
+            const btn = document.getElementById('start-btn');
+            btn.disabled = true;
+            btn.textContent = 'กำลังตรวจสอบ...';
+
+            if (!navigator.geolocation) {
+                showToast('เบราว์เซอร์ไม่รองรับ GPS');
+                document.getElementById('location-status').textContent = 'เบราว์เซอร์ไม่รองรับ GPS';
+                document.getElementById('location-status').className = 'fail';
+                btn.disabled = false;
+                btn.textContent = '↻ ลองใหม่อีกครั้ง';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(({ coords }) => {
+                const dist = getDistanceFromLatLonInM(coords.latitude, coords.longitude, TARGET_LAT, TARGET_LNG);
+                if (dist <= MAX_DISTANCE) {
+                    document.getElementById('location-status').textContent = '✓ ท่านอยู่ในพื้นที่แล้ว';
+                    btn.disabled = false;
+                    btn.textContent = '✦ เริ่ม AR';
+                    btn.onclick = startMindAR;
+                } else {
+                    showToast(`ห่างจากพื้นที่ ${Math.round(dist)} เมตร`);
+                    document.getElementById('location-status').textContent = `ห่างจากพื้นที่ ${Math.round(dist)} ม.`;
+                    document.getElementById('location-status').className = 'fail';
+                    btn.disabled = false;
+                    btn.textContent = '↻ ตรวจสอบอีกครั้ง';
+                }
+            }, (err) => {
+                showToast('กรุณาอนุญาตสิทธิ์ GPS');
+                document.getElementById('location-status').textContent = 'กรุณาอนุญาตสิทธิ์ GPS';
+                document.getElementById('location-status').className = 'fail';
+                btn.disabled = false;
+                btn.textContent = '↻ ลองใหม่อีกครั้ง';
+            }, { enableHighAccuracy: true });
         }
 
         // ปุ่มเล่น/หยุดเสียง (Toggle Play/Pause)
@@ -728,6 +770,7 @@
             if (tutorialVideo) { tutorialVideo.pause(); tutorialVideo.currentTime = 0; }
         }
 
+        // เริ่ม AR: สตาร์ทระบบ AR ทันที
         function startMindAR() {
             document.querySelectorAll('audio').forEach(a => { a.play().then(() => a.pause()).catch(() => { }); });
             const v = document.querySelector('#main-video');
@@ -769,8 +812,7 @@
             setTimeout(() => menu.classList.remove('hide'), 10);
         }
 
-        // ทำงานเมื่อโหลดหน้าเว็บเสร็จ
-        loadAR();
+        window.onload = loadAR;
 
     </script>
 </body>
