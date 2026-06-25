@@ -1,1146 +1,761 @@
-<?php
-session_start();
-require_once("../connect.php");
-/** @var mysqli $conn */
+    <?php
+    session_start();
+    require_once("../connect.php");
+    /** @var mysqli $conn */
 
-// 1. ตรวจสอบสิทธิ์การเข้าใช้งาน (ต้องเป็น Admin เท่านั้น) 🔐
-if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    echo "<script>
-            alert('คุณไม่มีสิทธิ์เข้าถึงหน้าจัดการระบบ!');
-            window.location.href = '../index.php';
-          </script>";
-    exit();
-}
+    if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+        echo "<script>alert('คุณไม่มีสิทธิ์เข้าถึงหน้าจัดการระบบ'); window.location.href='../index.php';</script>";
+        exit();
+    }
 
-// ─── ฟังก์ชันช่วยเหลือสำหรับแสดง SweetAlert2 ───
-function alertSuccess($msg, $redirect)
-{
-    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({icon: 'success', title: 'สำเร็จ!', text: '$msg', confirmButtonColor: '#c9a84c'}).then(() => { window.location.href='$redirect'; });
-        });
-    </script></body></html>";
-    exit();
-}
-function alertError($msg)
-{
-    echo "<!DOCTYPE html><html><head><script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script><style>body{background:#0e0e12;}</style></head><body><script>
-        document.addEventListener('DOMContentLoaded', function() {
-            Swal.fire({icon: 'error', title: 'ข้อผิดพลาด!', text: '$msg', confirmButtonColor: '#e05a5a'}).then(() => { history.back(); });
-        });
-    </script></body></html>";
-    exit();
-}
+    $adminNav = basename($_SERVER['PHP_SELF']);
 
-// ----------------- ADD AR MEDIA -----------------
-if (isset($_POST['add_media'])) {
-    $media_type       = $_POST['media_type'];
-    $info_id          = intval($_POST['info_id']);
-
-    $db_path       = NULL;
-    $db_audio_path = NULL;
-
-    try {
-        // 1. จัดการไฟล์โมเดล (ถ้ามีการอัปโหลด)
-        if (!empty($_FILES["file_upload"]["name"])) {
-            $filename = $_FILES["file_upload"]["name"];
-            $tempname = $_FILES["file_upload"]["tmp_name"];
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-
-            // ดักนามสกุลไฟล์ 3D
-            $allowed_models = ['glb', 'usdz'];
-            if (!in_array($ext, $allowed_models)) {
-                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์ 3D Model (.glb, .usdz) เท่านั้น");
-            }
-
-            $new_filename = time() . "_model_" . rand(1000, 9999) . "." . $ext;
-            $target_dir = "../model/";
-
-            if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
-
-            if (move_uploaded_file($tempname, $target_dir . $new_filename)) {
-                $db_path = "model/" . $new_filename;
-            } else {
-                throw new Exception("ไม่สามารถอัปโหลดไฟล์โมเดลได้");
-            }
+    // ----------------- ADD DATA -----------------
+    if (isset($_POST['add'])) {
+        $title   = $_POST['title_ganesha'];
+        $content = $_POST['content_ganesha'];
+        $img_tmp = $_FILES['img_ganesha']['tmp_name'];
+        $img_name = $_FILES['img_ganesha']['name'];
+        $ext     = pathinfo($img_name, PATHINFO_EXTENSION);
+        $new_name = time() . "_" . rand(1000, 9999) . "." . $ext;
+        $path    = "../image/" . $new_name;
+        if (move_uploaded_file($img_tmp, $path)) {
+            $stmt = $conn->prepare("INSERT INTO Ganesha_Info (title_ganesha, content_ganesha, img_ganesha) VALUES (?, ?, ?)");
+            $stmt->bind_param("sss", $title, $content, $new_name);
+            $stmt->execute();
         }
+        header("Location: manage_ganeshainfo.php");
+        exit();
+    }
 
-        // 2. จัดการไฟล์เสียง (ถ้ามีการอัปโหลด)
-        if (!empty($_FILES["audio_upload"]["name"])) {
-            $filename = $_FILES["audio_upload"]["name"];
-            $tempname = $_FILES["audio_upload"]["tmp_name"];
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+    // ----------------- EDIT DATA -----------------
+    if (isset($_POST['edit'])) {
+        $id = $_POST['info_id'];
+        $title = $_POST['title_ganesha'];
+        $content = $_POST['content_ganesha'];
+        $old_img = $_POST['old_img_ganesha'];
 
-            // ดักนามสกุลไฟล์เสียง
-            $allowed_audio = ['mp3', 'wav', 'mpeg'];
-            if (!in_array($ext, $allowed_audio)) {
-                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์เสียง (.mp3, .wav) เท่านั้น");
+        // Check if new image is uploaded
+        if (!empty($_FILES['img_ganesha']['name'])) {
+            $img_tmp = $_FILES['img_ganesha']['tmp_name'];
+            $img_name = $_FILES['img_ganesha']['name'];
+            $ext = pathinfo($img_name, PATHINFO_EXTENSION);
+            $new_name = time() . "_" . rand(1000, 9999) . "." . $ext;
+            $path = "../image/" . $new_name;
+
+            if (move_uploaded_file($img_tmp, $path)) {
+                // Delete old image
+                $f = "../image/" . $old_img;
+                if (file_exists($f) && !empty($old_img)) unlink($f);
+
+                // Update with new image
+                $stmt = $conn->prepare("UPDATE Ganesha_Info SET title_ganesha=?, content_ganesha=?, img_ganesha=? WHERE info_id=?");
+                $stmt->bind_param("sssi", $title, $content, $new_name, $id);
+                $stmt->execute();
             }
-
-            $new_filename = time() . "_audio_" . rand(1000, 9999) . "." . $ext;
-            $target_dir = "../audio/";
-
-            if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
-
-            if (move_uploaded_file($tempname, $target_dir . $new_filename)) {
-                $db_audio_path = "audio/" . $new_filename;
-            } else {
-                throw new Exception("ไม่สามารถอัปโหลดไฟล์เสียงได้");
-            }
-        }
-
-        // 3. บันทึกลงฐานข้อมูล
-        $sql  = "INSERT INTO ar_media (info_id, file_path, audio_file, media_type) VALUES (?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isss", $info_id, $db_path, $db_audio_path, $media_type);
-
-        if ($stmt->execute()) {
-            alertSuccess('บันทึกข้อมูลสื่อ AR ใหม่เข้าระบบสำเร็จ', 'manage_ar_media.php');
         } else {
-            throw new Exception($stmt->error);
+            // Update without changing image
+            $stmt = $conn->prepare("UPDATE Ganesha_Info SET title_ganesha=?, content_ganesha=? WHERE info_id=?");
+            $stmt->bind_param("ssi", $title, $content, $id);
+            $stmt->execute();
         }
-    } catch (Exception $e) {
-        alertError($e->getMessage());
-    }
-}
-
-// ----------------- EDIT AR MEDIA -----------------
-if (isset($_POST['edit_media'])) {
-    $media_id   = intval($_POST['media_id']);
-    $media_type = $_POST['media_type'];
-    $info_id    = intval($_POST['info_id']);
-
-    try {
-        if ($media_id <= 0) throw new Exception("ID ข้อมูลไม่ถูกต้อง");
-
-        // ดึงข้อมูลเดิมมาตรวจสอบ
-        $res = $conn->query("SELECT file_path, audio_file FROM ar_media WHERE media_id = $media_id");
-        if (!$res) throw new Exception("Query Failed: " . $conn->error);
-
-        $current_data = $res->fetch_assoc();
-        $db_path = $current_data['file_path'];
-        $db_audio_path = $current_data['audio_file'];
-
-        // 1. จัดการไฟล์โมเดลใหม่
-        if (!empty($_FILES["edit_file_upload"]["name"])) {
-            $filename = $_FILES["edit_file_upload"]["name"];
-            $tempname = $_FILES["edit_file_upload"]["tmp_name"];
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-
-            $allowed_models = ['glb', 'usdz'];
-            if (!in_array($ext, $allowed_models)) {
-                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์ 3D Model (.glb, .usdz) เท่านั้น");
-            }
-
-            $new_filename = time() . "_model_" . rand(1000, 9999) . "." . $ext;
-            $target_dir = "../model/";
-
-            if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
-
-            if (move_uploaded_file($tempname, $target_dir . $new_filename)) {
-                if (!empty($current_data['file_path']) && file_exists("../" . $current_data['file_path'])) {
-                    @unlink("../" . $current_data['file_path']);
-                }
-                $db_path = "model/" . $new_filename;
-            }
-        }
-
-        // 2. จัดการไฟล์เสียงใหม่
-        if (!empty($_FILES["edit_audio_upload"]["name"])) {
-            $filename = $_FILES["edit_audio_upload"]["name"];
-            $tempname = $_FILES["edit_audio_upload"]["tmp_name"];
-            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-
-            $allowed_audio = ['mp3', 'wav', 'mpeg'];
-            if (!in_array($ext, $allowed_audio)) {
-                throw new Exception("อนุญาตให้อัปโหลดเฉพาะไฟล์เสียง (.mp3, .wav) เท่านั้น");
-            }
-
-            $new_filename = time() . "_audio_" . rand(1000, 9999) . "." . $ext;
-            $target_dir = "../audio/";
-
-            if (!file_exists($target_dir)) mkdir($target_dir, 0777, true);
-
-            if (move_uploaded_file($tempname, $target_dir . $new_filename)) {
-                if (!empty($current_data['audio_file']) && file_exists("../" . $current_data['audio_file'])) {
-                    @unlink("../" . $current_data['audio_file']);
-                }
-                $db_audio_path = "audio/" . $new_filename;
-            }
-        }
-
-        // 3. อัปเดตข้อมูลในฐานข้อมูล
-        $sql  = "UPDATE ar_media SET info_id=?, file_path=?, audio_file=?, media_type=? WHERE media_id=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isssi", $info_id, $db_path, $db_audio_path, $media_type, $media_id);
-
-        if ($stmt->execute()) {
-            alertSuccess('แก้ไขข้อมูลสื่อ AR สำเร็จ', 'manage_ar_media.php');
-        } else {
-            throw new Exception($stmt->error);
-        }
-    } catch (Exception $e) {
-        alertError($e->getMessage());
-    }
-}
-
-// ----------------- DELETE AR MEDIA -----------------
-if (isset($_GET['delete'])) {
-    $id  = intval($_GET['delete']);
-
-    if ($id <= 0) {
-        alertError('เกิดข้อผิดพลาด: ไม่พบ ID ของข้อมูลที่ต้องการลบ');
+        header("Location: manage_ganeshainfo.php");
+        exit();
     }
 
-    $res = $conn->query("SELECT file_path, audio_file FROM ar_media WHERE media_id = $id");
-    $data = $res ? $res->fetch_assoc() : null;
-
-    $sql = "DELETE FROM ar_media WHERE media_id = $id";
-
-    if ($conn->query($sql) === TRUE) {
-        if ($data) {
-            if (!empty($data['file_path']) && file_exists("../" . $data['file_path'])) {
-                @unlink("../" . $data['file_path']);
-            }
-            if (!empty($data['audio_file']) && file_exists("../" . $data['audio_file'])) {
-                @unlink("../" . $data['audio_file']);
-            }
+    // ----------------- DELETE DATA -----------------
+    if (isset($_GET['delete'])) {
+        $id = $_GET['delete'];
+        $s2 = $conn->prepare("SELECT img_ganesha FROM Ganesha_Info WHERE info_id=?");
+        $s2->bind_param("i", $id);
+        $s2->execute();
+        $r2 = $s2->get_result();
+        if ($row2 = $r2->fetch_assoc()) {
+            $f = "../image/" . $row2['img_ganesha'];
+            if (file_exists($f) && !empty($row2['img_ganesha'])) unlink($f);
         }
-        alertSuccess('ลบข้อมูลสื่อ AR ออกจากระบบสำเร็จ', 'manage_ar_media.php');
-    } else {
-        alertError("ไม่สามารถลบข้อมูลได้! สาเหตุ: " . addslashes($conn->error));
+        $s3 = $conn->prepare("DELETE FROM Ganesha_Info WHERE info_id=?");
+        $s3->bind_param("i", $id);
+        $s3->execute();
+        header("Location: manage_ganeshainfo.php");
+        exit();
     }
-}
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
 
-$result = $conn->query("SELECT * FROM ar_media ORDER BY media_id DESC");
-$adminNav = basename($_SERVER['PHP_SELF']);
-?>
-<!DOCTYPE html>
-<html lang="th">
+    <head>
+        <meta charset="UTF-8">
+        <title>Manage Ganesha | AR Ganesha</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --gold: #c9a84c;
+                --gold-lt: #e8c97a;
+                --dark: #0e0e12;
+                --panel: #16161e;
+                --card: #1e1e2a;
+                --border: rgba(201, 168, 76, .18);
+                --txt: #e8e6f0;
+                --muted: #7a7a96;
+                --red: #e05a5a;
+                --teal: #38c9a0;
+                --blue: #4d9fff;
+                --purple: #9b72cf;
+                --sidebar-w: 260px;
+            }
 
-<head>
-    <meta charset="UTF-8">
-    <title>Manage AR Media | AR Ganesha</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0
+            }
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            body {
+                font-family: 'DM Sans', sans-serif;
+                background: var(--dark);
+                color: var(--txt);
+                overflow-x: hidden
+            }
 
-    <style>
-        :root {
-            --gold: #c9a84c;
-            --gold-lt: #e8c97a;
-            --dark: #0e0e12;
-            --panel: #16161e;
-            --card: #1e1e2a;
-            --border: rgba(201, 168, 76, .18);
-            --txt: #e8e6f0;
-            --muted: #a8a4c0;
-            --red: #e05a5a;
-            --teal: #38c9a0;
-            --blue: #4d9fff;
-            --purple: #9b72cf;
-            --sidebar-w: 260px;
-        }
-
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0
-        }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--dark);
-            color: var(--txt);
-            overflow-x: hidden
-        }
-
-        .sidebar {
-            width: var(--sidebar-w);
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: var(--panel);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            z-index: 1000;
-            overflow: hidden;
-            transition: transform .28s ease;
-        }
-
-        .sidebar::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, var(--gold), transparent)
-        }
-
-        .sidebar-logo {
-            padding: 28px 24px 20px;
-            border-bottom: 1px solid var(--border)
-        }
-
-        .sidebar-logo .logo-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.25rem;
-            color: var(--gold);
-            letter-spacing: .06em
-        }
-
-        .sidebar-logo .logo-sub {
-            font-size: .7rem;
-            color: var(--muted);
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            margin-top: 4px
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            padding: 18px 12px;
-            overflow-y: auto
-        }
-
-        .nav-label {
-            font-size: .62rem;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            color: var(--muted);
-            padding: 6px 12px 8px;
-            margin-top: 8px
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            color: var(--muted);
-            text-decoration: none;
-            font-size: .88rem;
-            font-weight: 500;
-            transition: all .2s;
-            position: relative
-        }
-
-        .nav-link i {
-            font-size: 1rem;
-            min-width: 18px;
-            text-align: center
-        }
-
-        .nav-link:hover {
-            color: var(--txt);
-            background: rgba(255, 255, 255, .05)
-        }
-
-        .nav-link.active {
-            color: var(--gold);
-            background: rgba(201, 168, 76, .1);
-            border: 1px solid var(--border)
-        }
-
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 20%;
-            bottom: 20%;
-            width: 3px;
-            background: var(--gold);
-            border-radius: 0 3px 3px 0
-        }
-
-        .sidebar-footer {
-            padding: 16px 12px;
-            border-top: 1px solid var(--border)
-        }
-
-        .sidebar-footer .nav-link {
-            color: var(--txt)
-        }
-
-        .sidebar-footer .nav-link:hover {
-            color: var(--gold);
-            background: rgba(201, 168, 76, .08)
-        }
-
-        .nav-link.logout {
-            color: #e05a5a80
-        }
-
-        .nav-link.logout:hover {
-            color: var(--red);
-            background: rgba(224, 90, 90, .08)
-        }
-
-        /* Mobile Responsive */
-        .mobile-toggle {
-            display: none;
-            position: fixed;
-            top: 14px;
-            left: 14px;
-            z-index: 1100;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            width: 40px;
-            height: 40px;
-            align-items: center;
-            justify-content: center;
-            color: var(--gold);
-            cursor: pointer;
-            font-size: 1.1rem
-        }
-
-        .sb-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .6);
-            z-index: 999;
-            backdrop-filter: blur(2px)
-        }
-
-        @media(max-width:768px) {
             .sidebar {
-                transform: translateX(-100%)
+                width: var(--sidebar-w);
+                height: 100vh;
+                position: fixed;
+                top: 0;
+                left: 0;
+                background: var(--panel);
+                border-right: 1px solid var(--border);
+                display: flex;
+                flex-direction: column;
+                z-index: 1000;
+                overflow: hidden
             }
 
-            .sidebar.open {
-                transform: translateX(0)
+            .sidebar::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: linear-gradient(90deg, transparent, var(--gold), transparent)
             }
 
-            .sb-overlay.open {
-                display: block
+            .sidebar-logo {
+                padding: 28px 24px 20px;
+                border-bottom: 1px solid var(--border)
             }
 
-            .mobile-toggle {
-                display: flex
+            .sidebar-logo .logo-title {
+                font-family: 'Cinzel', serif;
+                font-size: 1.25rem;
+                color: var(--gold);
+                letter-spacing: .06em
+            }
+
+            .sidebar-logo .logo-sub {
+                font-size: .7rem;
+                color: var(--muted);
+                letter-spacing: .12em;
+                text-transform: uppercase;
+                margin-top: 4px
+            }
+
+            .sidebar-nav {
+                flex: 1;
+                padding: 18px 12px;
+                overflow-y: auto
+            }
+
+            .nav-label {
+                font-size: .62rem;
+                letter-spacing: .14em;
+                text-transform: uppercase;
+                color: var(--muted);
+                padding: 6px 12px 8px;
+                margin-top: 8px
+            }
+
+            .nav-link {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px 14px;
+                border-radius: 8px;
+                color: var(--muted);
+                text-decoration: none;
+                font-size: .88rem;
+                font-weight: 500;
+                transition: all .2s;
+                position: relative
+            }
+
+            .nav-link i {
+                font-size: 1rem;
+                min-width: 18px;
+                text-align: center
+            }
+
+            .nav-link:hover {
+                color: var(--txt);
+                background: rgba(255, 255, 255, .05)
+            }
+
+            .nav-link.active {
+                color: var(--gold);
+                background: rgba(201, 168, 76, .1);
+                border: 1px solid var(--border)
+            }
+
+            .nav-link.active::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 20%;
+                bottom: 20%;
+                width: 3px;
+                background: var(--gold);
+                border-radius: 0 3px 3px 0
+            }
+
+            .sidebar-footer {
+                padding: 16px 12px;
+                border-top: 1px solid var(--border)
+            }
+
+            .nav-link.logout {
+                color: #e05a5a80
+            }
+
+            .nav-link.logout:hover {
+                color: var(--red);
+                background: rgba(224, 90, 90, .08)
             }
 
             .main {
-                margin-left: 0 !important;
-                padding: 24px 18px 50px !important;
+                margin-left: var(--sidebar-w);
+                min-height: 100vh;
+                padding: 36px 40px
             }
 
             .topbar {
-                margin-top: 40px
-            }
-        }
-
-        .main {
-            margin-left: var(--sidebar-w);
-            min-height: 100vh;
-            padding: 36px 40px
-        }
-
-        .topbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 28px
-        }
-
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap
-        }
-
-        .page-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            color: var(--txt);
-            letter-spacing: .04em
-        }
-
-        .page-title span {
-            color: var(--gold)
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 14px
-        }
-
-        .user-pill {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 8px 16px 8px 10px;
-            border-radius: 40px;
-            font-size: .84rem
-        }
-
-        .user-pill .avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--gold), #7a5a1a);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: .8rem;
-            font-weight: 700;
-            color: #000
-        }
-
-        .user-pill .name {
-            color: var(--gold);
-            font-weight: 600
-        }
-
-        .time-badge {
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 8px 14px;
-            border-radius: 40px;
-            font-size: .78rem;
-            color: var(--muted)
-        }
-
-        .btn-add {
-            background: linear-gradient(135deg, var(--gold), #a07830);
-            color: #000;
-            border: none;
-            padding: 9px 20px;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: .85rem;
-            cursor: pointer;
-            transition: all .2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px
-        }
-
-        .btn-add:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(201, 168, 76, .35)
-        }
-
-        .data-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            overflow: hidden
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse
-        }
-
-        .data-table thead tr {
-            background: rgba(201, 168, 76, .07);
-            border-bottom: 1px solid var(--border)
-        }
-
-        .data-table th {
-            font-size: .72rem;
-            letter-spacing: .1em;
-            text-transform: uppercase;
-            color: var(--muted);
-            padding: 14px 18px;
-            font-weight: 600
-        }
-
-        .data-table td {
-            padding: 13px 18px;
-            font-size: .87rem;
-            border-bottom: 1px solid rgba(255, 255, 255, .04);
-            color: var(--txt);
-            vertical-align: middle
-        }
-
-        .data-table tbody tr:hover {
-            background: rgba(255, 255, 255, .03)
-        }
-
-        .model-placeholder {
-            width: 72px;
-            height: 48px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: rgba(77, 159, 255, .08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--blue);
-            font-size: 1.4rem
-        }
-
-        .audio-placeholder {
-            width: 72px;
-            height: 48px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: rgba(56, 201, 160, .08);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--teal);
-            font-size: 1.4rem
-        }
-
-        .badge-pill {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: .72rem;
-            font-weight: 600;
-            letter-spacing: .05em;
-            text-transform: uppercase
-        }
-
-        .badge-model {
-            background: rgba(77, 159, 255, .15);
-            color: var(--blue);
-            border: 1px solid rgba(77, 159, 255, .3)
-        }
-
-        .badge-audio {
-            background: rgba(56, 201, 160, .15);
-            color: var(--teal);
-            border: 1px solid rgba(56, 201, 160, .3)
-        }
-
-        .file-path-box {
-            background: rgba(255, 255, 255, .05);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: .75rem;
-            color: var(--muted);
-            border: 1px solid var(--border);
-            display: block;
-            margin-bottom: 4px;
-            word-break: break-all;
-        }
-
-        .btn-action-group {
-            display: flex;
-            gap: 6px;
-            justify-content: center;
-        }
-
-        .btn-edit {
-            background: rgba(77, 159, 255, .12);
-            color: var(--blue);
-            border: 1px solid rgba(77, 159, 255, .25);
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: .78rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all .18s;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px
-        }
-
-        .btn-edit:hover {
-            background: var(--blue);
-            color: #fff
-        }
-
-        .btn-del {
-            background: rgba(224, 90, 90, .12);
-            color: var(--red);
-            border: 1px solid rgba(224, 90, 90, .25);
-            padding: 5px 12px;
-            border-radius: 6px;
-            font-size: .78rem;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all .18s;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px
-        }
-
-        .btn-del:hover {
-            background: var(--red);
-            color: #fff
-        }
-
-        /* Modal styling */
-        .modal-content {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            color: var(--txt)
-        }
-
-        .modal-header {
-            border-bottom: 1px solid var(--border);
-            padding: 20px 24px
-        }
-
-        .modal-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.05rem;
-            color: var(--gold)
-        }
-
-        .btn-close {
-            filter: invert(1) brightness(.5)
-        }
-
-        .modal-footer {
-            border-top: 1px solid var(--border);
-            padding: 16px 24px;
-            background: rgba(0, 0, 0, .15)
-        }
-
-        .modal-body {
-            padding: 24px
-        }
-
-        .form-label {
-            font-size: .72rem;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 6px;
-            display: block;
-            font-weight: 600
-        }
-
-        .form-control,
-        .form-select {
-            background: rgba(255, 255, 255, .05);
-            border: 1px solid var(--border);
-            color: var(--txt);
-            border-radius: 8px;
-            padding: 9px 13px;
-            font-size: .88rem;
-            width: 100%;
-            transition: border-color .18s;
-            font-family: 'DM Sans', sans-serif
-        }
-
-        .form-control:focus,
-        .form-select:focus {
-            outline: none;
-            border-color: var(--gold);
-            background: rgba(255, 255, 255, .07);
-            box-shadow: 0 0 0 3px rgba(201, 168, 76, .12);
-            color: var(--txt)
-        }
-
-        .form-select option {
-            background: var(--panel)
-        }
-
-        .btn-save {
-            background: linear-gradient(135deg, var(--teal), #1e8a6c);
-            color: #fff;
-            border: none;
-            padding: 9px 22px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all .2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px
-        }
-
-        .btn-save:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(56, 201, 160, .3)
-        }
-
-        .btn-cancel {
-            background: rgba(255, 255, 255, .07);
-            color: var(--muted);
-            border: 1px solid var(--border);
-            padding: 9px 22px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all .18s
-        }
-
-        .btn-cancel:hover {
-            background: rgba(255, 255, 255, .12);
-            color: var(--txt)
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(12px)
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                flex-wrap: wrap;
+                gap: 16px;
+                margin-bottom: 28px
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0)
+            .topbar-actions {
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                flex-wrap: wrap
             }
-        }
 
-        .anim {
-            animation: fadeUp .4s ease both
-        }
+            .page-title {
+                font-family: 'Cinzel', serif;
+                font-size: 1.8rem;
+                color: var(--txt);
+                letter-spacing: .04em
+            }
 
-        .anim-1 {
-            animation-delay: .05s
-        }
+            .page-title span {
+                color: var(--gold)
+            }
 
-        .anim-2 {
-            animation-delay: .12s
-        }
-    </style>
-</head>
+            .topbar-right {
+                display: flex;
+                align-items: center;
+                gap: 14px
+            }
 
-<body>
+            .user-pill {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                background: var(--card);
+                border: 1px solid var(--border);
+                padding: 8px 16px 8px 10px;
+                border-radius: 40px;
+                font-size: .84rem
+            }
 
-    <button type="button" class="mobile-toggle" id="sidebarToggle"><i class="bi bi-list"></i></button>
-    <div class="sb-overlay" id="sbOverlay"></div>
+            .user-pill .avatar {
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--gold), #7a5a1a);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: .8rem;
+                font-weight: 700;
+                color: #000
+            }
 
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-logo">
-            <div class="logo-title">AR Ganesha</div>
-            <div class="logo-sub">Admin Console</div>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-label">Main</div>
-            <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
-            <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>"><i class="bi bi-people-fill"></i> Manage Users</a>
+            .user-pill .name {
+                color: var(--gold);
+                font-weight: 600
+            }
 
-            <div class="nav-label">Content</div>
-            <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>"><i class="bi bi-bank2"></i> Ganesha Info</a>
-            <a href="manage_ar_media.php" class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>"><i class="bi bi-camera-fill"></i> AR Media</a>
-            <a href="manage_restaurant.php" class="nav-link <?= $adminNav === 'manage_restaurant.php' ? 'active' : '' ?>"><i class="bi bi-shop"></i> Restaurants</a>
-            <a href="manage_places.php" class="nav-link <?= $adminNav === 'manage_places.php' ? 'active' : '' ?>"><i class="bi bi-geo-alt-fill"></i> Places</a>
-            <a href="manage_reviews.php" class="nav-link <?= $adminNav === 'manage_reviews.php' ? 'active' : '' ?>"><i class="bi bi-star-fill"></i> Reviews</a>
-        </nav>
-        <div class="sidebar-footer">
-            <a href="../index.php" class="nav-link"><i class="bi bi-house-door-fill"></i> ไปหน้า Index</a>
-            <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
-        </div>
-    </aside>
+            .time-badge {
+                background: var(--card);
+                border: 1px solid var(--border);
+                padding: 8px 14px;
+                border-radius: 40px;
+                font-size: .78rem;
+                color: var(--muted)
+            }
 
-    <main class="main">
-        <div class="topbar anim anim-1">
-            <div>
-                <div class="page-title">AR <span>Media</span></div>
-                <div style="color:var(--muted);font-size:.8rem;margin-top:4px;"><?= date('l, d F Y') ?></div>
+            .btn-add {
+                background: linear-gradient(135deg, var(--gold), #a07830);
+                color: #000;
+                border: none;
+                padding: 9px 20px;
+                border-radius: 8px;
+                font-weight: 700;
+                font-size: .85rem;
+                cursor: pointer;
+                transition: all .2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px
+            }
+
+            .btn-add:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(201, 168, 76, .35)
+            }
+
+            .data-card {
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                overflow: hidden
+            }
+
+            .data-table {
+                width: 100%;
+                border-collapse: collapse
+            }
+
+            .data-table thead tr {
+                background: rgba(201, 168, 76, .07);
+                border-bottom: 1px solid var(--border)
+            }
+
+            .data-table th {
+                font-size: .72rem;
+                letter-spacing: .1em;
+                text-transform: uppercase;
+                color: var(--muted);
+                padding: 14px 18px;
+                font-weight: 600
+            }
+
+            .data-table td {
+                padding: 13px 18px;
+                font-size: .87rem;
+                border-bottom: 1px solid rgba(255, 255, 255, .04);
+                color: var(--txt);
+                vertical-align: middle
+            }
+
+            .data-table tbody tr:last-child td {
+                border-bottom: none
+            }
+
+            .data-table tbody tr:hover {
+                background: rgba(255, 255, 255, .03)
+            }
+
+            .id-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                background: rgba(201, 168, 76, .12);
+                border: 1px solid var(--border);
+                font-size: .75rem;
+                font-weight: 700;
+                color: var(--gold)
+            }
+
+            .img-thumb {
+                width: 72px;
+                height: 48px;
+                object-fit: cover;
+                border-radius: 6px;
+                border: 1px solid var(--border)
+            }
+
+            /* สไตล์ปุ่มแก้ไข */
+            .btn-edit {
+                background: rgba(77, 159, 255, .12);
+                color: var(--blue);
+                border: 1px solid rgba(77, 159, 255, .25);
+                padding: 5px 12px;
+                border-radius: 6px;
+                font-size: .78rem;
+                cursor: pointer;
+                text-decoration: none;
+                transition: all .18s;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px
+            }
+
+            .btn-edit:hover {
+                background: var(--blue);
+                color: #fff
+            }
+
+            .btn-del {
+                background: rgba(224, 90, 90, .12);
+                color: var(--red);
+                border: 1px solid rgba(224, 90, 90, .25);
+                padding: 5px 12px;
+                border-radius: 6px;
+                font-size: .78rem;
+                cursor: pointer;
+                text-decoration: none;
+                transition: all .18s;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px
+            }
+
+            .btn-del:hover {
+                background: var(--red);
+                color: #fff
+            }
+
+            .content-preview {
+                color: var(--muted);
+                font-size: .83rem;
+                line-height: 1.5
+            }
+
+            /* สไตล์ Modal */
+            .modal-content {
+                background: var(--panel);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                color: var(--txt)
+            }
+
+            .modal-header {
+                border-bottom: 1px solid var(--border);
+                padding: 20px 24px
+            }
+
+            .modal-title {
+                font-family: 'Cinzel', serif;
+                font-size: 1.05rem;
+                color: var(--gold)
+            }
+
+            .btn-close {
+                filter: invert(1) brightness(.5)
+            }
+
+            .modal-footer {
+                border-top: 1px solid var(--border);
+                padding: 16px 24px;
+                background: rgba(0, 0, 0, .15)
+            }
+
+            .modal-body {
+                padding: 24px
+            }
+
+            .form-label {
+                font-size: .72rem;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+                color: var(--muted);
+                margin-bottom: 6px;
+                display: block;
+                font-weight: 600
+            }
+
+            .form-control {
+                background: rgba(255, 255, 255, .05);
+                border: 1px solid var(--border);
+                color: var(--txt);
+                border-radius: 8px;
+                padding: 9px 13px;
+                font-size: .88rem;
+                width: 100%;
+                transition: border-color .18s;
+                font-family: 'DM Sans', sans-serif
+            }
+
+            .form-control:focus {
+                outline: none;
+                border-color: var(--gold);
+                background: rgba(255, 255, 255, .07);
+                box-shadow: 0 0 0 3px rgba(201, 168, 76, .12);
+                color: var(--txt)
+            }
+
+            .form-control::placeholder {
+                color: var(--muted)
+            }
+
+            textarea.form-control {
+                resize: vertical
+            }
+
+            .mb-3 {
+                margin-bottom: 1rem
+            }
+
+            .btn-save {
+                background: linear-gradient(135deg, var(--teal), #1e8a6c);
+                color: #fff;
+                border: none;
+                padding: 9px 22px;
+                border-radius: 8px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all .2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px
+            }
+
+            .btn-save:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(56, 201, 160, .3)
+            }
+
+            .btn-update {
+                background: linear-gradient(135deg, var(--blue), #2b78d4);
+                color: #fff;
+                border: none;
+                padding: 9px 22px;
+                border-radius: 8px;
+                font-weight: 700;
+                cursor: pointer;
+                transition: all .2s;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px
+            }
+
+            .btn-update:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 6px 20px rgba(77, 159, 255, .3)
+            }
+
+            .btn-cancel {
+                background: rgba(255, 255, 255, .07);
+                color: var(--muted);
+                border: 1px solid var(--border);
+                padding: 9px 22px;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all .18s
+            }
+
+            .btn-cancel:hover {
+                background: rgba(255, 255, 255, .12);
+                color: var(--txt)
+            }
+
+            /* Animations */
+            @keyframes fadeUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(12px)
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0)
+                }
+            }
+
+            .anim {
+                animation: fadeUp .4s ease both
+            }
+
+            .anim-1 {
+                animation-delay: .05s
+            }
+
+            .anim-2 {
+                animation-delay: .12s
+            }
+        </style>
+    </head>
+
+    <body>
+
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-title">AR Ganesha</div>
+                <div class="logo-sub">Admin Console</div>
             </div>
-            <div class="topbar-actions">
-                <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                    <i class="bi bi-plus-lg"></i> เพิ่มสื่อใหม่
-                </button>
-                <div class="topbar-right">
-                    <div class="time-badge"><i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i> Live</div>
-                    <div class="user-pill">
-                        <div class="avatar"><?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?></div>
-                        <span class="name"><?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?></span>
+            <nav class="sidebar-nav">
+                <div class="nav-label">Main</div>
+                <a href="dashboard.php" class="nav-link <?= $adminNav === 'dashboard.php' ? 'active' : '' ?>"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                <a href="manage_users.php" class="nav-link <?= $adminNav === 'manage_users.php' ? 'active' : '' ?>"><i class="bi bi-people-fill"></i> Manage Users</a>
+                <div class="nav-label">Content</div>
+                <a href="manage_ganeshainfo.php" class="nav-link <?= $adminNav === 'manage_ganeshainfo.php' ? 'active' : '' ?>"><i class="bi bi-bank2"></i> Ganesha Info</a>
+                <a href="manage_ar_media.php" class="nav-link <?= $adminNav === 'manage_ar_media.php' ? 'active' : '' ?>"><i class="bi bi-camera-fill"></i> AR Media</a>
+                <a href="manage_restaurant.php" class="nav-link <?= $adminNav === 'manage_restaurant.php' ? 'active' : '' ?>"><i class="bi bi-shop"></i> Restaurants</a>
+                <a href="manage_places.php" class="nav-link <?= $adminNav === 'manage_places.php' ? 'active' : '' ?>"><i class="bi bi-geo-alt-fill"></i> Places</a>
+                <a href="manage_reviews.php" class="nav-link <?= $adminNav === 'manage_reviews.php' ? 'active' : '' ?>"><i class="bi bi-star-fill"></i> Reviews</a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="logout.php" class="nav-link logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <div class="topbar anim anim-1">
+                <div>
+                    <div class="page-title">Ganesha <span>Info</span></div>
+                    <div style="color:var(--muted);font-size:.8rem;margin-top:4px;"><?= date('l, d F Y') ?></div>
+                </div>
+                <div class="topbar-actions">
+                    <button type="button" class="btn-add" data-bs-toggle="modal" data-bs-target="#addModal">
+                        <i class="bi bi-plus-lg"></i> เพิ่มข้อมูล ประวัติพระพิฆเนศ
+                    </button>
+                    <div class="topbar-right">
+                        <div class="time-badge"><i class="bi bi-circle-fill text-success me-1" style="font-size:.5rem;"></i> Live</div>
+                        <div class="user-pill">
+                            <div class="avatar"><?= strtoupper(substr($_SESSION['username'], 0, 1)) ?></div>
+                            <span class="name"><?= htmlspecialchars($_SESSION['username']) ?></span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="data-card anim anim-2">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th style="width:90px">Preview</th>
-                        <th style="width:120px">Type</th>
-                        <th>Files Info</th>
-                        <th style="text-align:center;width:160px">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php while ($row = $result->fetch_assoc()): ?>
+            <div class="data-card anim anim-2">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <?php if ($row['media_type'] == 'model'): ?>
-                                    <div class="model-placeholder"><i class="bi bi-box-seam"></i></div>
-                                <?php else: ?>
-                                    <div class="audio-placeholder"><i class="bi bi-music-note-beamed"></i></div>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <?php
-                                $cls = ($row['media_type'] == 'model') ? 'badge-model' : 'badge-audio';
-                                $type_text = ($row['media_type'] == 'model') ? 'MODEL 3D' : 'AUDIO ONLY';
-                                ?>
-                                <span class="badge-pill <?= $cls ?>"><?= $type_text ?></span>
-                            </td>
-                            <td>
-                                <?php if (!empty($row['file_path'])): ?>
-                                    <span class="file-path-box"><i class="bi bi-box text-primary me-1"></i> <?= htmlspecialchars($row['file_path']) ?></span>
-                                <?php endif; ?>
-                                <?php if (!empty($row['audio_file'])): ?>
-                                    <span class="file-path-box"><i class="bi bi-mic text-success me-1"></i> <?= htmlspecialchars($row['audio_file']) ?></span>
-                                <?php endif; ?>
-                                <div style="font-size:0.75rem; color:var(--muted); margin-top: 4px;">
-                                    <strong>Info ID:</strong> <?= $row['info_id'] ?>
-                                </div>
-                            </td>
-                            <td style="text-align:center">
-                                <div class="btn-action-group">
-                                    <button type="button" class="btn-edit"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#editModal"
-                                        data-id="<?= $row['media_id'] ?>"
-                                        data-info="<?= $row['info_id'] ?>"
-                                        data-type="<?= $row['media_type'] ?>">
+                            <th style="width:50px">ID</th>
+                            <th style="width:90px">Image</th>
+                            <th>Title</th>
+                            <th>Content</th>
+                            <th style="text-align:center;width:170px">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        $modals = ''; // ตัวแปรสำหรับเก็บ HTML ของ Edit Modal แต่ละแถว
+                        $result = $conn->query("SELECT * FROM Ganesha_Info ORDER BY info_id DESC");
+                        while ($row = $result->fetch_assoc()):
+                        ?>
+                            <tr>
+                                <td><span class="id-badge"><?= $row['info_id'] ?></span></td>
+                                <td>
+                                    <img src="../image/<?= htmlspecialchars($row['img_ganesha'] ?? 'default.jpg') ?>"
+                                        class="img-thumb" onerror="this.src='../image/default.jpg'">
+                                </td>
+                                <td style="font-weight:600"><?= htmlspecialchars($row['title_ganesha']) ?></td>
+                                <td class="content-preview"><?= mb_substr(htmlspecialchars($row['content_ganesha']), 0, 110, 'UTF-8') ?>...</td>
+                                <td style="text-align:center; display: flex; gap: 8px; justify-content: center; border-bottom: none;">
+                                    <button class="btn-edit" data-bs-toggle="modal" data-bs-target="#editModal<?= $row['info_id'] ?>">
                                         <i class="bi bi-pencil-square"></i> แก้ไข
                                     </button>
-
-                                    <button class="btn-del" onclick="confirmDelete(<?= $row['media_id'] ?>)">
+                                    <a href="?delete=<?= $row['info_id'] ?>" class="btn-del" onclick="return confirm('Delete this data?')">
                                         <i class="bi bi-trash"></i> ลบ
-                                    </button>
+                                    </a>
+                                </td>
+                            </tr>
+
+                            <?php
+                            // สร้าง Edit Modal ของแต่ละแถวเก็บไว้ในตัวแปร
+                            $modals .= '
+                            <div class="modal fade" id="editModal' . $row['info_id'] . '" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <form method="POST" enctype="multipart/form-data" class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title"><i class="bi bi-pencil-square me-2" style="color:var(--blue)"></i>Edit Ganesha</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-start">
+                                            <input type="hidden" name="info_id" value="' . $row['info_id'] . '">
+                                            <input type="hidden" name="old_img_ganesha" value="' . htmlspecialchars($row['img_ganesha']) . '">
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Title</label>
+                                                <input type="text" name="title_ganesha" class="form-control" value="' . htmlspecialchars($row['title_ganesha']) . '" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Content</label>
+                                                <textarea name="content_ganesha" class="form-control" rows="5" required>' . htmlspecialchars($row['content_ganesha']) . '</textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Image (เว้นว่างไว้หากต้องการใช้รูปเดิม)</label>
+                                                <div class="mb-2">
+                                                    <img src="../image/' . htmlspecialchars($row['img_ganesha'] ?? 'default.jpg') . '" onerror="this.src=\'../image/default.jpg\'" style="width:120px; border-radius:8px; border:1px solid var(--border)">
+                                                </div>
+                                                <input type="file" name="img_ganesha" class="form-control" accept="image/*">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" name="edit" class="btn-update"><i class="bi bi-save"></i> Update</button>
+                                        </div>
+                                    </form>
                                 </div>
-                            </td>
-                        </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+                            </div>';
+                            ?>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <div class="modal fade" id="addModal" tabindex="-1">
+            <div class="modal-dialog">
+                <form method="POST" enctype="multipart/form-data" class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="bi bi-bank2 me-2"></i>Add Ganesha</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" name="title_ganesha" class="form-control" placeholder="Enter title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Content</label>
+                            <textarea name="content_ganesha" class="form-control" rows="5" placeholder="Enter content" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Image</label>
+                            <input type="file" name="img_ganesha" class="form-control" accept="image/*" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" name="add" class="btn-save"><i class="bi bi-save"></i> Save</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </main>
 
-    <div class="modal fade" id="uploadModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <form class="modal-content" method="POST" enctype="multipart/form-data">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-cloud-upload-fill me-2"></i>เพิ่มสื่อ AR</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-start">
-                    <div class="mb-3">
-                        <label class="form-label">ประเภทสื่อ *</label>
-                        <select name="media_type" id="media_type" class="form-select" onchange="toggleUploadFields()" required>
-                            <option value="model" selected>AR Model (.glb, .usdz)</option>
-                            <option value="audio_only">Audio Only (ไฟล์เสียงอย่างเดียว)</option>
-                        </select>
-                    </div>
+        <?= $modals ?>
 
-                    <div class="mb-3">
-                        <label class="form-label">เชื่อมโยงกับ Info ID *</label>
-                        <input type="number" name="info_id" class="form-control" placeholder="ระบุ ID ขององค์พระพิฆเนศ" required>
-                    </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
 
-                    <hr style="border-color: var(--border); margin: 20px 0;">
-
-                    <div class="mb-3" id="model_upload_group">
-                        <label class="form-label text-primary">เลือกไฟล์โมเดล 3D *</label>
-                        <input type="file" name="file_upload" id="file_upload" class="form-control" accept=".glb,.usdz" required>
-                    </div>
-
-                    <div class="mb-3" id="audio_upload_group">
-                        <label class="form-label text-success">
-                            เลือกไฟล์เสียง <span id="audio_req_text" class="text-muted" style="font-size: 0.72rem; font-weight: normal; text-transform: none;">(เว้นว่างได้ถ้าไม่มี)</span>
-                        </label>
-                        <input type="file" name="audio_upload" id="audio_upload" class="form-control" accept="audio/mp3, audio/wav, audio/mpeg">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">ปิด</button>
-                    <button type="submit" name="add_media" class="btn-save">
-                        <i class="bi bi-save"></i> บันทึกข้อมูลสื่อ
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal fade" id="editModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <form class="modal-content" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="media_id" id="edit_media_id">
-
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>แก้ไขสื่อ AR</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-start">
-                    <div class="mb-3">
-                        <label class="form-label">ประเภทสื่อ *</label>
-                        <select name="media_type" id="edit_media_type" class="form-select" onchange="toggleEditFields()" required>
-                            <option value="model">AR Model (.glb, .usdz)</option>
-                            <option value="audio_only">Audio Only (ไฟล์เสียงอย่างเดียว)</option>
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">เชื่อมโยงกับ Info ID *</label>
-                        <input type="number" name="info_id" id="edit_info_id" class="form-control" placeholder="ระบุ ID ขององค์พระพิฆเนศ" required>
-                    </div>
-
-                    <div class="alert alert-warning" style="background: rgba(201, 168, 76, 0.1); border: 1px solid var(--border); color: var(--gold-lt); font-size: 0.8rem; padding: 10px; border-radius: 8px;">
-                        <i class="bi bi-info-circle me-1"></i> หากไม่ต้องการเปลี่ยนไฟล์ ปล่อยช่องอัปโหลดว่างไว้ได้เลย
-                    </div>
-
-                    <div class="mb-3" id="edit_model_upload_group">
-                        <label class="form-label text-primary">เปลี่ยนไฟล์โมเดล 3D ใหม่</label>
-                        <input type="file" name="edit_file_upload" id="edit_file_upload" class="form-control" accept=".glb,.usdz">
-                    </div>
-
-                    <div class="mb-3" id="edit_audio_upload_group">
-                        <label class="form-label text-success">เปลี่ยนไฟล์เสียงใหม่</label>
-                        <input type="file" name="edit_audio_upload" id="edit_audio_upload" class="form-control" accept="audio/mp3, audio/wav, audio/mpeg">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">ปิด</button>
-                    <button type="submit" name="edit_media" class="btn-save">
-                        <i class="bi bi-check-lg"></i> บันทึกการแก้ไข
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // ─── การจัดการแสดงผลฟิลด์อัปโหลดตามประเภทสื่อ ───
-        function toggleUploadFields() {
-            const mediaType = document.getElementById('media_type').value;
-            const modelGroup = document.getElementById('model_upload_group');
-            const fileUpload = document.getElementById('file_upload');
-            const audioUpload = document.getElementById('audio_upload');
-            const audioReqText = document.getElementById('audio_req_text');
-
-            if (mediaType === 'audio_only') {
-                modelGroup.style.display = 'none';
-                fileUpload.removeAttribute('required');
-                audioUpload.setAttribute('required', 'required');
-                audioReqText.textContent = '* จำเป็นต้องใส่ไฟล์เสียง';
-                audioReqText.className = 'text-danger';
-            } else {
-                modelGroup.style.display = 'block';
-                fileUpload.setAttribute('required', 'required');
-                audioUpload.removeAttribute('required');
-                audioReqText.textContent = '(เว้นว่างได้ถ้าไม่มี)';
-                audioReqText.className = 'text-muted';
-            }
-        }
-
-        function toggleEditFields() {
-            const mediaType = document.getElementById('edit_media_type').value;
-            const modelGroup = document.getElementById('edit_model_upload_group');
-
-            if (mediaType === 'audio_only') {
-                modelGroup.style.display = 'none';
-            } else {
-                modelGroup.style.display = 'block';
-            }
-        }
-
-        // ─── กำหนดค่าลงฟอร์มเมื่อกดแก้ไข ───
-        const editModal = document.getElementById('editModal');
-        if (editModal) {
-            editModal.addEventListener('show.bs.modal', event => {
-                const button = event.relatedTarget;
-                document.getElementById('edit_media_id').value = button.getAttribute('data-id');
-                document.getElementById('edit_info_id').value = button.getAttribute('data-info');
-                document.getElementById('edit_media_type').value = button.getAttribute('data-type');
-                toggleEditFields();
-            });
-        }
-
-        // ─── ตรวจสอบขนาดไฟล์ (Frontend Limit) ───
-        document.addEventListener('DOMContentLoaded', () => {
-            toggleUploadFields();
-            const maxFileSizeMB = 40;
-            const maxFileSizeBytes = maxFileSizeMB * 1024 * 1024;
-
-            function validateFileSize(event) {
-                const fileInput = event.target;
-                if (fileInput.files.length > 0) {
-                    const fileSize = fileInput.files[0].size;
-                    if (fileSize > maxFileSizeBytes) {
-                        const actualSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'ไฟล์ใหญ่เกินไป!',
-                            text: `ขนาดไฟล์ของคุณ: ${actualSizeMB} MB (จำกัดไม่เกิน: ${maxFileSizeMB} MB) กรุณาเลือกไฟล์ใหม่ครับ`,
-                            confirmButtonColor: '#e8c97a'
-                        });
-                        fileInput.value = '';
-                    }
-                }
-            }
-
-            const fileInputIds = ['file_upload', 'audio_upload', 'edit_file_upload', 'edit_audio_upload'];
-            fileInputIds.forEach(id => {
-                const inputElement = document.getElementById(id);
-                if (inputElement) {
-                    inputElement.addEventListener('change', validateFileSize);
-                }
-            });
-
-            // ─── เพิ่ม Loading Spinner เวลาส่งฟอร์ม ───
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function() {
-                    const btnSave = this.querySelector('.btn-save');
-                    if (btnSave) {
-                        btnSave.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> กำลังบันทึก...';
-                        btnSave.style.pointerEvents = 'none'; // ป้องกันกดเบิ้ล
-                    }
-                });
-            });
-        });
-
-        // ─── การเปิดปิดเมนูสำหรับมือถือ (Mobile Sidebar) ───
-        const toggle = document.getElementById('sidebarToggle'),
-            sidebar = document.getElementById('sidebar'),
-            overlay = document.getElementById('sbOverlay');
-
-        if (toggle && sidebar && overlay) {
-            toggle.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                overlay.classList.toggle('open')
-            });
-            overlay.addEventListener('click', () => {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('open')
-            });
-        }
-
-        // ─── SweetAlert สำหรับการกดยืนยันลบข้อมูล ───
-        function confirmDelete(id) {
-            Swal.fire({
-                title: 'ยืนยันการลบ?',
-                text: "ข้อมูลสื่อและไฟล์ที่เกี่ยวข้องจะถูกลบทิ้งอย่างถาวร!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#e05a5a',
-                cancelButtonColor: '#474761',
-                confirmButtonText: 'ใช่, ลบเลย!',
-                cancelButtonText: 'ยกเลิก',
-                background: '#1e1e2a',
-                color: '#e8e6f0'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = `?delete=${id}`;
-                }
-            });
-        }
-    </script>
-</body>
-
-</html>
+    </html>
