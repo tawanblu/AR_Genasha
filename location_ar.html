@@ -42,6 +42,7 @@
             position: fixed;
         }
 
+        /* บังคับ A-Frame, Canvas และ Video ให้ขยายเต็มจอแบบ Cover ไร้ขอบดำและโปร่งใส */
         a-scene {
             position: fixed !important;
             inset: 0 !important;
@@ -60,87 +61,12 @@
             object-fit: cover !important;
         }
 
+        /* ซ่อน UI และ Mask สีน้ำตาลที่ติดมากับระบบสแกน MindAR */
         .mindar-ui-scanning,
         .mindar-ui-mask {
             display: none !important;
             opacity: 0 !important;
             background: transparent !important;
-        }
-
-        /* ═══════════ AR LOADING OVERLAY ═══════════ */
-        #ar-loading-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 800;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 18px;
-            background: rgba(10, 2, 0, 0.92);
-            backdrop-filter: blur(6px);
-            text-align: center;
-            padding: 24px;
-        }
-
-        .ar-load-symbol {
-            font-size: 3rem;
-            color: var(--gold-light);
-            animation: om-pulse 2s ease-in-out infinite;
-            text-shadow: 0 0 20px rgba(212, 168, 67, 0.4);
-        }
-
-        @keyframes om-pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-
-            50% {
-                opacity: 0.7;
-                transform: scale(1.08);
-            }
-        }
-
-        .ar-load-title {
-            font-family: 'Cinzel Decorative', serif;
-            font-size: clamp(1rem, 3vw, 1.2rem);
-            color: var(--gold-light);
-            letter-spacing: 0.06em;
-        }
-
-        .ar-load-pct {
-            font-size: 2.8rem;
-            font-weight: 700;
-            color: var(--gold);
-            line-height: 1;
-            min-width: 5ch;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .ar-load-bar-wrap {
-            width: min(280px, 72vw);
-            height: 6px;
-            background: rgba(212, 168, 67, 0.12);
-            border-radius: 999px;
-            overflow: hidden;
-            border: 1px solid rgba(212, 168, 67, 0.20);
-        }
-
-        .ar-load-bar {
-            height: 100%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #b83e0a 0%, #d4a843 100%);
-            width: 0%;
-            transition: width 0.4s ease;
-        }
-
-        .ar-load-sub {
-            font-size: 0.82rem;
-            color: var(--text-dim);
-            min-height: 1.2em;
         }
 
         /* ═══════════ MENU ═══════════ */
@@ -498,7 +424,7 @@
             border-radius: 0 0 0 4px;
         }
 
-        /* ═══════════ AUDIO CONTROLS ═══════════ */
+        /* ═══════════ PLAY AUDIO CONTROLS ═══════════ */
         #audio-controls {
             position: fixed;
             bottom: clamp(30px, 8vh, 50px);
@@ -564,24 +490,13 @@
 
 <body>
 
-    <!-- AR Loading Overlay -->
-    <div id="ar-loading-overlay">
-        <div class="ar-load-symbol">ॐ</div>
-        <div class="ar-load-title">กำลังโหลด AR</div>
-        <div class="ar-load-pct" id="ar-load-pct">0%</div>
-        <div class="ar-load-bar-wrap">
-            <div class="ar-load-bar" id="ar-load-bar"></div>
-        </div>
-        <div class="ar-load-sub" id="ar-load-sub">กำลังเตรียมระบบ...</div>
-    </div>
-
     <div id="menu">
         <div id="menu-panel">
             <div class="om">ॐ</div>
             <div class="title">Ganesha AR</div>
             <p class="desc">กรุณาตรวจสอบตำแหน่ง GPS<br>เพื่อเริ่มต้นประสบการณ์ AR</p>
 
-            <button id="start-btn" onclick="checkLocationAuto()">ตรวจสอบตำแหน่ง</button>
+            <button id="start-btn" onclick="checkLocationAuto()"> ตรวจสอบตำแหน่ง</button>
 
             <button id="how-to-btn" onclick="openInstructionsFromMenu()">❔ วิธีการใช้งาน</button>
 
@@ -619,14 +534,12 @@
                 <li>
                     กดปุ่ม <strong>"✦ เริ่ม AR"</strong>
                     และอนุญาตให้เบราว์เซอร์เข้าถึงกล้อง
-                    (ระบบจะแสดงเปอร์เซ็นต์การโหลดข้อมูลและโหลดวิดีโอโมเดลเพื่อแสดงผลบนองค์พระพิฆเนศ)
+
                 </li>
 
-                <li>
-                    หันกล้องไปที่ <strong>องค์พระพิฆเนศ</strong>
-                    เพื่อให้ระบบสแกนและแสดงวิดีโอโมเดล
+                <li>หันกล้องไปที่ <strong>องค์พระพิฆเนศ</strong> และรอโหลดสักครู่
                 </li>
-
+                <li>เมื่อโหลดเสร็จ วิดีโอโมเดลพระพิฆเนศแบบขยับได้จะแสดงขึ้นมาซ้อนทับสถานที่</li>
                 <li>
                     กดปุ่ม <strong>"เล่น / หยุดรับคำอวยพร"</strong>
                     เพื่อรับฟังเสียงคำอวยพร
@@ -647,7 +560,7 @@
     </div>
 
     <div id="audio-controls">
-        <button id="play-audio-btn"> เล่น / หยุดรับคำอวยพร</button>
+        <button id="play-audio-btn">🔊 เล่น / หยุดรับคำอวยพร</button>
     </div>
 
     <a-scene id="scene" mindar-image="imageTargetSrc: mind_files/alltargets.mind; autoStart: false; uiScanning: no;"
@@ -661,9 +574,9 @@
     <script>
         const scene = document.querySelector('#scene');
         let activeTarget = null;
-        let lostTimer = null;
+        let lostTimer = null; // ตัวแปรหน่วงเวลารีเซ็ต (30 วินาที)
 
-        // ── ข้อมูลวิดีโอ และ เสียง (36 targets) ──
+        // ── ข้อมูลวิดีโอ และ เสียง (รวม 36 targets) ──
         const data = [
             { target_index: 0, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3' },
             { target_index: 1, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3' },
@@ -703,61 +616,6 @@
             { target_index: 35, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3' }
         ];
 
-        // ── AR Loading Progress ──
-        let arLoadTimer = null;
-
-        const AR_LOAD_STEPS = [
-            { pct: 12, text: 'กำลังโหลดไฟล์ .mind...' },
-            { pct: 28, text: 'วิเคราะห์ Image Targets...' },
-            { pct: 48, text: 'เตรียม Neural Network...' },
-            { pct: 65, text: 'กำลังเปิดกล้อง...' },
-            { pct: 82, text: 'เกือบพร้อมแล้ว...' },
-            { pct: 90, text: 'รอระบบ AR เริ่มต้น...' }
-        ];
-
-        function startARLoading() {
-            let stepIdx = 0;
-            const overlay = document.getElementById('ar-loading-overlay');
-            const pctEl = document.getElementById('ar-load-pct');
-            const barEl = document.getElementById('ar-load-bar');
-            const subEl = document.getElementById('ar-load-sub');
-
-            overlay.style.display = 'flex';
-            pctEl.textContent = '0%';
-            barEl.style.width = '0%';
-            subEl.textContent = 'กำลังเตรียมระบบ...';
-
-            if (arLoadTimer) clearInterval(arLoadTimer);
-
-            arLoadTimer = setInterval(() => {
-                if (stepIdx < AR_LOAD_STEPS.length) {
-                    const step = AR_LOAD_STEPS[stepIdx];
-                    pctEl.textContent = step.pct + '%';
-                    barEl.style.width = step.pct + '%';
-                    subEl.textContent = step.text;
-                    stepIdx++;
-                }
-            }, 600);
-        }
-
-        function finishARLoading() {
-            if (arLoadTimer) { clearInterval(arLoadTimer); arLoadTimer = null; }
-
-            const pctEl = document.getElementById('ar-load-pct');
-            const barEl = document.getElementById('ar-load-bar');
-            const subEl = document.getElementById('ar-load-sub');
-
-            pctEl.textContent = '100%';
-            barEl.style.width = '100%';
-            subEl.textContent = '✦ พร้อมแล้ว! หันกล้องไปที่พระพิฆเนศ';
-
-            setTimeout(() => {
-                document.getElementById('ar-loading-overlay').style.display = 'none';
-                document.getElementById('scanning-overlay').style.display = 'flex';
-            }, 800);
-        }
-
-        // ── โหลด AR Entities ──
         function loadAR() {
             data.forEach(item => {
                 const entity = document.createElement('a-entity');
@@ -778,16 +636,19 @@
                     audioEl.id = `audio-${item.target_index}`;
                     audioEl.src = item.audio_url;
                     audioEl.loop = false;
-                    audioEl.preload = 'auto';
+                    audioEl.preload = "auto";
                     document.body.appendChild(audioEl);
                 }
 
-                // เมื่อสแกนเจอภาพ
+                // ── เมื่อสแกนเจอภาพ ──
                 entity.addEventListener('targetFound', () => {
                     document.getElementById('scanning-overlay').style.display = 'none';
                     document.getElementById('audio-controls').style.display = 'block';
 
-                    if (lostTimer) { clearTimeout(lostTimer); lostTimer = null; }
+                    if (lostTimer) {
+                        clearTimeout(lostTimer);
+                        lostTimer = null;
+                    }
 
                     const v = document.querySelector('#main-video');
                     const plane = entity.querySelector('.video-plane');
@@ -806,13 +667,13 @@
 
                     if (activeTarget && activeTarget.audio_url) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-                        if (audio && audio.dataset.wasPlaying === 'true') {
+                        if (audio && audio.dataset.wasPlaying === "true") {
                             audio.play().catch(err => console.error(err));
                         }
                     }
                 });
 
-                // เมื่อหลุดโฟกัส
+                // ── เมื่อหลุดโฟกัส ──
                 entity.addEventListener('targetLost', () => {
                     document.getElementById('scanning-overlay').style.display = 'flex';
                     document.getElementById('audio-controls').style.display = 'none';
@@ -827,9 +688,9 @@
                         if (audio) {
                             if (!audio.paused) {
                                 audio.pause();
-                                audio.dataset.wasPlaying = 'true';
+                                audio.dataset.wasPlaying = "true";
                             } else {
-                                audio.dataset.wasPlaying = 'false';
+                                audio.dataset.wasPlaying = "false";
                             }
                         }
                     }
@@ -843,7 +704,7 @@
                             if (audio) {
                                 audio.pause();
                                 audio.currentTime = 0;
-                                audio.dataset.wasPlaying = 'false';
+                                audio.dataset.wasPlaying = "false";
                             }
                             activeTarget = null;
                         }
@@ -853,18 +714,15 @@
             });
         }
 
-        // ── GPS ──
+        // ระบบพิกัด GPS
         const TARGET_LAT = 13.895402;
         const TARGET_LNG = 100.5621089;
         const MAX_DISTANCE = 1000000;
-
         function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat / 2) ** 2 +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon / 2) ** 2;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
@@ -876,6 +734,7 @@
             if (!navigator.geolocation) {
                 showToast('เบราว์เซอร์ไม่รองรับ GPS');
                 document.getElementById('location-status').textContent = 'เบราว์เซอร์ไม่รองรับ GPS';
+                document.getElementById('location-status').className = 'fail';
                 btn.disabled = false;
                 btn.textContent = '↻ ลองใหม่อีกครั้ง';
                 return;
@@ -891,44 +750,45 @@
                 } else {
                     showToast(`ห่างจากพื้นที่ ${Math.round(dist)} เมตร`);
                     document.getElementById('location-status').textContent = `ห่างจากพื้นที่ ${Math.round(dist)} ม.`;
+                    document.getElementById('location-status').className = 'fail';
                     btn.disabled = false;
                     btn.textContent = '↻ ตรวจสอบอีกครั้ง';
                 }
-            }, () => {
+            }, (err) => {
                 showToast('กรุณาอนุญาตสิทธิ์ GPS');
                 document.getElementById('location-status').textContent = 'กรุณาอนุญาตสิทธิ์ GPS';
+                document.getElementById('location-status').className = 'fail';
                 btn.disabled = false;
                 btn.textContent = '↻ ลองใหม่อีกครั้ง';
             }, { enableHighAccuracy: true });
         }
 
-        // ── ปุ่มเล่น/หยุดเสียง ──
+        // ปุ่มเล่น/หยุดเสียง (Toggle Play/Pause)
         document.getElementById('play-audio-btn').addEventListener('click', () => {
-            if (!activeTarget) return;
-            const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-            if (!audio) return;
-            if (audio.paused) {
-                audio.play();
-                audio.dataset.wasPlaying = 'true';
-            } else {
-                audio.pause();
-                audio.dataset.wasPlaying = 'false';
+            if (activeTarget) {
+                const audio = document.getElementById(`audio-${activeTarget.target_index}`);
+                if (audio) {
+                    if (audio.paused) {
+                        audio.play();
+                        audio.dataset.wasPlaying = "true";
+                    } else {
+                        audio.pause();
+                        audio.dataset.wasPlaying = "false";
+                    }
+                }
             }
         });
 
         function showToast(msg) {
             const t = document.createElement('div');
-            t.className = 'toast';
-            t.textContent = msg;
+            t.className = 'toast'; t.textContent = msg;
             document.body.appendChild(t);
             setTimeout(() => t.classList.add('show'), 10);
             setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
         }
 
-        // ── UI ──
-        function openInstructionsFromMenu() {
-            document.getElementById('instruction-popup').style.display = 'flex';
-        }
+        // UI Functions
+        function openInstructionsFromMenu() { document.getElementById('instruction-popup').style.display = 'flex'; }
 
         function closeInstructions() {
             document.getElementById('instruction-popup').style.display = 'none';
@@ -936,78 +796,59 @@
             if (tutorialVideo) { tutorialVideo.pause(); tutorialVideo.currentTime = 0; }
         }
 
-        // ── เริ่ม AR ──
+        // เริ่ม AR
         function startMindAR() {
-            // ปลดล็อก Audio Context บน iOS/Android
+            // 🌟 แก้ไข: สั่งปิดเสียง (Mute) ก่อนทำการปลดล็อกเพื่อไม่ให้เกิดเสียงแทรก
             document.querySelectorAll('audio').forEach(a => {
                 a.muted = true;
-                a.play().then(() => { a.pause(); a.muted = false; }).catch(() => { });
+                a.play().then(() => {
+                    a.pause();
+                    a.muted = false; // คืนค่าเพื่อให้กดปุ่มเล่นเสียงทีหลังได้
+                }).catch(() => { });
             });
 
             const v = document.querySelector('#main-video');
             v.muted = true;
             v.play().then(() => v.pause()).catch(() => { });
 
-            // ซ่อนเมนู
             const menu = document.getElementById('menu');
             menu.classList.add('hide');
             setTimeout(() => menu.style.display = 'none', 650);
 
-            // แสดงปุ่มกลับ + เริ่ม loading progress
+            document.getElementById('scanning-overlay').style.display = 'flex';
             document.getElementById('back-btn').style.display = 'flex';
-            startARLoading();
 
-            // เริ่ม MindAR
             const sys = scene.systems['mindar-image-system'];
-            if (sys) {
-                sys.start();
-            } else {
-                scene.addEventListener('loaded', () => {
-                    scene.systems['mindar-image-system'].start();
-                }, { once: true });
-            }
-
-            // จบ loading เมื่อ MindAR พร้อม
-            scene.addEventListener('arReady', finishARLoading, { once: true });
-
-            // Fallback: ถ้า arReady ไม่ยิงใน 15 วินาที ก็จบ loading อัตโนมัติ
-            setTimeout(() => {
-                if (document.getElementById('ar-loading-overlay').style.display !== 'none') {
-                    finishARLoading();
-                }
-            }, 15000);
+            sys ? sys.start() : scene.addEventListener('loaded', () => scene.systems['mindar-image-system'].start());
         }
 
-        // ── กลับเมนู ──
         function backToMenu() {
             const sys = scene.systems['mindar-image-system'];
             if (sys) sys.stop();
-
             const v = document.querySelector('#main-video');
             if (v) v.pause();
 
-            if (arLoadTimer) { clearInterval(arLoadTimer); arLoadTimer = null; }
-            if (lostTimer) { clearTimeout(lostTimer); lostTimer = null; }
+            if (lostTimer) {
+                clearTimeout(lostTimer);
+                lostTimer = null;
+            }
 
             if (activeTarget) {
                 const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                 if (audio) { audio.pause(); audio.currentTime = 0; delete audio.dataset.wasPlaying; }
                 activeTarget = null;
             }
-
-            document.getElementById('ar-loading-overlay').style.display = 'none';
             document.getElementById('scanning-overlay').style.display = 'none';
             document.getElementById('audio-controls').style.display = 'none';
             document.getElementById('back-btn').style.display = 'none';
-
             document.querySelectorAll('.video-plane').forEach(p => p.setAttribute('visible', 'false'));
-
             const menu = document.getElementById('menu');
             menu.style.display = 'flex';
             setTimeout(() => menu.classList.remove('hide'), 10);
         }
 
         window.onload = loadAR;
+
     </script>
 </body>
 
