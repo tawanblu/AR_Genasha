@@ -541,7 +541,7 @@
             background: rgba(212, 168, 67, 0.15);
         }
 
-        /* ═══════════ AUDIO CONTROLS (ICON BUTTON) ═══════════ */
+        /* ═══════════ AUDIO CONTROLS (ICON + TEXT) ═══════════ */
         #audio-controls {
             position: fixed;
             bottom: clamp(30px, 8vh, 50px);
@@ -555,12 +555,17 @@
             background: rgba(15, 4, 0, 0.90);
             border: 1px solid var(--gold);
             color: var(--gold-light);
-            width: 58px;
-            height: 58px;
-            border-radius: 50%;
-            display: flex;
+            min-width: 200px;
+            padding: 12px 22px;
+            border-radius: 50px;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
+            gap: 10px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 168, 67, 0.2);
             cursor: pointer;
             backdrop-filter: blur(10px);
@@ -568,27 +573,34 @@
         }
 
         #play-audio-btn:hover {
-            transform: scale(1.08);
+            transform: scale(1.04);
             background: rgba(30, 8, 0, 0.95);
             box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(212, 168, 67, 0.3);
         }
 
         #play-audio-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.97);
         }
 
-        /* ไอคอนจะถูกจัดให้อยู่กึ่งกลางพอดี */
+        #play-audio-btn .btn-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
         #play-audio-btn svg {
-            width: 26px;
-            height: 26px;
+            width: 22px;
+            height: 22px;
             fill: currentColor;
-            /* ขยับไอคอน Play ไปทางขวานิดนึงให้ดูสมดุลตรงกลาง */
+        }
+
+        #play-audio-btn:not(.playing) svg {
             margin-left: 2px;
         }
 
-        #play-audio-btn.playing svg {
-            /* ไอคอน Pause ไม่ต้องขยับ */
-            margin-left: 0;
+        #play-audio-btn .btn-label {
+            white-space: nowrap;
         }
 
         .toast {
@@ -697,17 +709,15 @@
 
     <!-- Video Popup -->
     <div id="video-popup">
-        <video id="ui-video-player" playsinline loop crossorigin="anonymous"></video>
+        <video id="ui-video-player" playsinline loop crossorigin="anonymous" preload="auto"></video>
         <button id="close-video-btn">✖ ปิดเพื่อสแกนใหม่</button>
     </div>
 
-    <!-- ปุ่ม Audio เป็นไอคอนวงกลม -->
+    <!-- ปุ่ม Audio แสดงไอคอน + ข้อความ -->
     <div id="audio-controls">
-        <button id="play-audio-btn">
-            <!-- Default เป็นไอคอน Play -->
-            <svg viewBox="0 0 24 24">
-                <path d="M8 5.14v14l11-7-11-7z" />
-            </svg>
+        <button id="play-audio-btn" type="button">
+            <span class="btn-icon"></span>
+            <span class="btn-label">เล่นรับคำอวยพร</span>
         </button>
     </div>
 
@@ -724,6 +734,25 @@
         // ไอคอน SVG
         const iconPlay = `<svg viewBox="0 0 24 24"><path d="M8 5.14v14l11-7-11-7z"/></svg>`;
         const iconPause = `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+
+        function setPlayBtnState(playing) {
+            const iconEl = playBtn.querySelector('.btn-icon');
+            const labelEl = playBtn.querySelector('.btn-label');
+            if (playing) {
+                iconEl.innerHTML = iconPause;
+                labelEl.textContent = 'หยุดรับคำอวยพร';
+                playBtn.classList.add('playing');
+            } else {
+                iconEl.innerHTML = iconPlay;
+                labelEl.textContent = 'เล่นรับคำอวยพร';
+                playBtn.classList.remove('playing');
+            }
+        }
+
+        setPlayBtnState(false);
+
+        const uiVideo = document.getElementById('ui-video-player');
+        const preloadedVideos = new Map();
 
         // ── ข้อมูลวิดีโอ และ เสียง ──
         const data = [
@@ -764,6 +793,61 @@
             { target_index: 34, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3' },
             { target_index: 35, video_url: 'videos/AR_move_Watnayang01.mp4', audio_url: 'audio/Watnayang.mp3' }
         ];
+
+        function normalizeVideoPath(url) {
+            try {
+                return decodeURIComponent(new URL(url, location.href).pathname);
+            } catch {
+                return url;
+            }
+        }
+
+        function isSameVideoSrc(videoEl, url) {
+            if (videoEl.dataset.activeSrc === url) return true;
+            if (!videoEl.src) return false;
+            return normalizeVideoPath(videoEl.src) === normalizeVideoPath(url);
+        }
+
+        function preloadUniqueVideos() {
+            const uniqueUrls = [...new Set(data.map(item => item.video_url))];
+
+            uniqueUrls.forEach(url => {
+                if (preloadedVideos.has(url)) return;
+                const video = document.createElement('video');
+                video.preload = 'auto';
+                video.src = url;
+                video.muted = true;
+                video.load();
+                preloadedVideos.set(url, video);
+            });
+
+            if (uniqueUrls.length && !uiVideo.dataset.activeSrc) {
+                uiVideo.src = uniqueUrls[0];
+                uiVideo.dataset.activeSrc = uniqueUrls[0];
+                uiVideo.load();
+            }
+        }
+
+        function playTargetVideo(videoEl, url) {
+            const sameSource = isSameVideoSrc(videoEl, url);
+
+            if (!sameSource) {
+                videoEl.src = url;
+                videoEl.dataset.activeSrc = url;
+                videoEl.load();
+            }
+
+            videoEl.currentTime = 0;
+
+            const startPlayback = () => videoEl.play().catch(err => console.error(err));
+            if (sameSource && videoEl.readyState >= 2) {
+                startPlayback();
+            } else if (sameSource) {
+                videoEl.addEventListener('canplay', startPlayback, { once: true });
+            } else {
+                videoEl.addEventListener('loadeddata', startPlayback, { once: true });
+            }
+        }
 
         // ── AR Loading Progress ──
         let arLoadTimer = null;
@@ -855,29 +939,21 @@
                     const sys = scene.systems['mindar-image-system'];
                     if (sys) sys.pause();
 
-                    const uiVideo = document.getElementById('ui-video-player');
-                    if (uiVideo.src !== item.video_url) {
-                        uiVideo.src = item.video_url;
-                        uiVideo.load();
-                    }
-                    uiVideo.play().catch(err => console.error(err));
+                    playTargetVideo(uiVideo, item.video_url);
 
                     activeTarget = item;
 
                     // รีเซ็ตปุ่มเป็น Play
-                    playBtn.innerHTML = iconPlay;
-                    playBtn.classList.remove('playing');
+                    setPlayBtnState(false);
 
                     if (activeTarget && activeTarget.audio_url) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                         if (audio) {
                             audio.play().then(() => {
-                                playBtn.innerHTML = iconPause;
-                                playBtn.classList.add('playing');
+                                setPlayBtnState(true);
                             }).catch(err => {
                                 console.error('Audio autoplay prevented:', err);
-                                playBtn.innerHTML = iconPlay;
-                                playBtn.classList.remove('playing');
+                                setPlayBtnState(false);
                             });
                             audio.dataset.wasPlaying = 'true';
                         }
@@ -959,7 +1035,7 @@
             }, { enableHighAccuracy: true });
         }
 
-        // ── ปุ่มเล่น/หยุดเสียง (Toggle - Icon Version) ──
+        // ── ปุ่มเล่น/หยุดเสียง (Toggle - Icon + Text) ──
         playBtn.addEventListener('click', () => {
             if (!activeTarget) return;
             const audio = document.getElementById(`audio-${activeTarget.target_index}`);
@@ -968,13 +1044,11 @@
             if (audio.paused) {
                 audio.play();
                 audio.dataset.wasPlaying = 'true';
-                playBtn.innerHTML = iconPause;
-                playBtn.classList.add('playing');
+                setPlayBtnState(true);
             } else {
                 audio.pause();
                 audio.dataset.wasPlaying = 'false';
-                playBtn.innerHTML = iconPlay;
-                playBtn.classList.remove('playing');
+                setPlayBtnState(false);
             }
         });
 
@@ -1000,12 +1074,14 @@
 
         // ── เริ่ม AR ──
         function startMindAR() {
+            preloadUniqueVideos();
+
             document.querySelectorAll('audio').forEach(a => {
                 a.muted = true;
                 a.play().then(() => { a.pause(); a.muted = false; }).catch(() => { });
             });
 
-            const v = document.querySelector('#ui-video-player');
+            const v = uiVideo;
             v.muted = true;
             v.play().then(() => { v.pause(); v.muted = false; }).catch(() => { });
 
@@ -1034,8 +1110,8 @@
             const sys = scene.systems['mindar-image-system'];
             if (sys) sys.stop();
 
-            const uiVideo = document.getElementById('ui-video-player');
-            if (uiVideo) uiVideo.pause();
+            const uiVideoEl = document.getElementById('ui-video-player');
+            if (uiVideoEl) uiVideoEl.pause();
 
             if (arLoadTimer) { clearInterval(arLoadTimer); arLoadTimer = null; }
 
@@ -1056,7 +1132,10 @@
             setTimeout(() => menu.classList.remove('hide'), 10);
         }
 
-        window.onload = loadAR;
+        window.onload = () => {
+            loadAR();
+            preloadUniqueVideos();
+        };
     </script>
 </body>
 
