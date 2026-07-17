@@ -134,7 +134,8 @@
             border-radius: 999px;
             background: linear-gradient(90deg, #b83e0a 0%, #d4a843 100%);
             width: 0%;
-            transition: width 0.4s ease;
+            transition: width 0.1s linear;
+            /* ปรับให้วิ่งเนียนขึ้น */
         }
 
         .ar-load-sub {
@@ -498,7 +499,7 @@
             border-radius: 0 0 0 4px;
         }
 
-        /* ═══════════ VIDEO POPUP (เล่นค้างบนจอแบบ Responsive สุดๆ) ═══════════ */
+        /* ═══════════ VIDEO POPUP ═══════════ */
         #video-popup {
             position: fixed;
             inset: 0;
@@ -515,16 +516,13 @@
         #ui-video-player {
             width: 100%;
             max-width: 450px;
-            /* จำกัดความกว้างไม่ให้ใหญ่เกินไปในจอคอมพิวเตอร์ */
             height: auto;
             max-height: 75vh;
-            /* ป้องกันไม่ให้วิดีโอล้นจอในแนวตั้ง */
             border-radius: 12px;
-            border: 2px solid var(--gold);
-            /* ขอบทองคงไว้ตามเดิม */
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 168, 67, 0.2);
+            border: none;
+            /* กรอบทองถูกถอดออกตามความต้องการ */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
             background: #000;
-            /* ใช้ contain เพื่อให้วิดีโอแสดงเต็มกรอบและพอดีหน้าจอเสมอโดยไม่โดนตัด */
             object-fit: contain;
         }
 
@@ -697,7 +695,6 @@
         <button id="play-audio-btn">▶ เล่นคำอวยพร</button>
     </div>
 
-    <!-- ตัด <a-assets> ออกไปได้เลยเพราะเปลี่ยนมาใช้วิดีโอบน HTML ธรรมดาแทนแล้ว -->
     <a-scene id="scene" mindar-image="imageTargetSrc: mind_files/alltargets.mind; autoStart: false; uiScanning: no;"
         vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -708,7 +705,7 @@
         let activeTarget = null;
         const playBtn = document.getElementById('play-audio-btn');
 
-        // ── ข้อมูลวิดีโอ และ เสียง (36 targets) ──
+        // ── ข้อมูลวิดีโอ และ เสียง ──
         const data = [
             { target_index: 0, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3' },
             { target_index: 1, video_url: 'videos/AR_MOVE_SU01.mp4', audio_url: 'audio/Silpakorn.mp3' },
@@ -750,39 +747,38 @@
 
         // ── AR Loading Progress ──
         let arLoadTimer = null;
-
-        const AR_LOAD_STEPS = [
-            { pct: 12, text: 'กำลังโหลดไฟล์ .mind...' },
-            { pct: 28, text: 'วิเคราะห์ Image Targets...' },
-            { pct: 48, text: 'เตรียม Neural Network...' },
-            { pct: 65, text: 'กำลังเปิดกล้อง...' },
-            { pct: 82, text: 'เกือบพร้อมแล้ว...' },
-            { pct: 90, text: 'รอระบบ AR เริ่มต้น...' }
-        ];
+        let currentPct = 0;
 
         function startARLoading() {
-            let stepIdx = 0;
             const overlay = document.getElementById('ar-loading-overlay');
             const pctEl = document.getElementById('ar-load-pct');
             const barEl = document.getElementById('ar-load-bar');
             const subEl = document.getElementById('ar-load-sub');
 
             overlay.style.display = 'flex';
+            currentPct = 0;
             pctEl.textContent = '0%';
             barEl.style.width = '0%';
             subEl.textContent = 'กำลังเตรียมระบบ...';
 
             if (arLoadTimer) clearInterval(arLoadTimer);
 
+            // อัปเดตทุก 50ms ให้วิ่งไปถึง 90% ในเวลาประมาณ 3 วินาที (60 รอบ * +1.5 = 90%)
             arLoadTimer = setInterval(() => {
-                if (stepIdx < AR_LOAD_STEPS.length) {
-                    const step = AR_LOAD_STEPS[stepIdx];
-                    pctEl.textContent = step.pct + '%';
-                    barEl.style.width = step.pct + '%';
-                    subEl.textContent = step.text;
-                    stepIdx++;
+                if (currentPct < 90) {
+                    currentPct += 1.5;
+                    if (currentPct > 90) currentPct = 90;
+
+                    pctEl.textContent = Math.floor(currentPct) + '%';
+                    barEl.style.width = currentPct + '%';
+
+                    if (currentPct < 20) subEl.textContent = 'กำลังโหลดไฟล์ .mind...';
+                    else if (currentPct < 45) subEl.textContent = 'วิเคราะห์ Image Targets...';
+                    else if (currentPct < 70) subEl.textContent = 'เตรียม Neural Network...';
+                    else if (currentPct < 90) subEl.textContent = 'กำลังเปิดกล้อง...';
+                    else subEl.textContent = 'รอระบบกล้องพร้อมทำงาน...'; // หยุดรอที่ 90% จนกว่า Event arReady จะทำงาน
                 }
-            }, 600);
+            }, 50);
         }
 
         function finishARLoading() {
@@ -824,7 +820,7 @@
                     document.getElementById('video-popup').style.display = 'flex';
                     document.getElementById('audio-controls').style.display = 'block';
 
-                    // หยุดระบบ AR ชั่วคราว (สแกนติดแล้วเล่นค้าง ไม่ต้องถือกล้องค้างไว้)
+                    // หยุดระบบ AR ชั่วคราว
                     const sys = scene.systems['mindar-image-system'];
                     if (sys) sys.pause();
 
@@ -837,7 +833,6 @@
 
                     activeTarget = item;
 
-                    // เล่นเสียงอัตโนมัติ และอัปเดตข้อความปุ่ม
                     playBtn.innerHTML = '▶ เล่นคำอวยพร';
                     if (activeTarget && activeTarget.audio_url) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
@@ -861,11 +856,9 @@
             document.getElementById('audio-controls').style.display = 'none';
             document.getElementById('scanning-overlay').style.display = 'flex';
 
-            // หยุดวิดีโอ
             const uiVideo = document.getElementById('ui-video-player');
             uiVideo.pause();
 
-            // หยุดเสียง
             if (activeTarget) {
                 const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                 if (audio) {
@@ -876,7 +869,6 @@
                 activeTarget = null;
             }
 
-            // เริ่มระบบ AR แทร็กกิ้งกลับมาทำงานใหม่เพื่อให้สแกนเป้าหมายอื่นต่อได้
             const sys = scene.systems['mindar-image-system'];
             if (sys) sys.unpause();
         });
@@ -970,27 +962,22 @@
 
         // ── เริ่ม AR ──
         function startMindAR() {
-            // ปลดล็อก Audio Context บน iOS/Android
             document.querySelectorAll('audio').forEach(a => {
                 a.muted = true;
                 a.play().then(() => { a.pause(); a.muted = false; }).catch(() => { });
             });
 
-            // ปลดล็อกวิดีโอ 2D Popup
             const v = document.querySelector('#ui-video-player');
             v.muted = true;
             v.play().then(() => { v.pause(); v.muted = false; }).catch(() => { });
 
-            // ซ่อนเมนู
             const menu = document.getElementById('menu');
             menu.classList.add('hide');
             setTimeout(() => menu.style.display = 'none', 650);
 
-            // แสดงปุ่มกลับ + เริ่ม loading progress
             document.getElementById('back-btn').style.display = 'flex';
             startARLoading();
 
-            // เริ่ม MindAR
             const sys = scene.systems['mindar-image-system'];
             if (sys) {
                 sys.start();
@@ -1000,15 +987,8 @@
                 }, { once: true });
             }
 
-            // จบ loading เมื่อ MindAR พร้อม
+            // จบ loading ทันทีที่ MindAR แจ้งเตือนว่ากล้องและระบบพร้อม (100% เท่านั้น)
             scene.addEventListener('arReady', finishARLoading, { once: true });
-
-            // Fallback: ถ้า arReady ไม่ยิงใน 15 วินาที ก็จบ loading อัตโนมัติ
-            setTimeout(() => {
-                if (document.getElementById('ar-loading-overlay').style.display !== 'none') {
-                    finishARLoading();
-                }
-            }, 15000);
         }
 
         // ── กลับเมนู ──
