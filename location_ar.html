@@ -753,6 +753,8 @@
 
         const uiVideo = document.getElementById('ui-video-player');
         const preloadedVideos = new Map();
+        const audioPlayers = new Map();
+        let activeAudio = null;
 
         // ── ข้อมูลวิดีโอ และ เสียง ──
         const data = [
@@ -849,6 +851,35 @@
             }
         }
 
+        function getAudioPlayer(url) {
+            if (!audioPlayers.has(url)) {
+                const audioEl = document.createElement('audio');
+                audioEl.src = url;
+                audioEl.loop = false;
+                audioEl.preload = 'auto';
+                document.body.appendChild(audioEl);
+                audioPlayers.set(url, audioEl);
+            }
+            return audioPlayers.get(url);
+        }
+
+        function stopAllAudios() {
+            audioPlayers.forEach(audio => {
+                audio.pause();
+                audio.currentTime = 0;
+                delete audio.dataset.wasPlaying;
+            });
+            activeAudio = null;
+        }
+
+        function playTargetAudio(url) {
+            stopAllAudios();
+            const audio = getAudioPlayer(url);
+            activeAudio = audio;
+            audio.currentTime = 0;
+            return audio.play();
+        }
+
         // ── AR Loading Progress ──
         let arLoadTimer = null;
         let currentPct = 0;
@@ -920,17 +951,13 @@
                 entity.setAttribute('mindar-image-target', `targetIndex: ${item.target_index}`);
                 scene.appendChild(entity);
 
-                if (item.audio_url) {
-                    const audioEl = document.createElement('audio');
-                    audioEl.id = `audio-${item.target_index}`;
-                    audioEl.src = item.audio_url;
-                    audioEl.loop = false;
-                    audioEl.preload = 'auto';
-                    document.body.appendChild(audioEl);
-                }
-
                 // เมื่อสแกนเจอภาพ
                 entity.addEventListener('targetFound', () => {
+                    if (activeTarget?.target_index === item.target_index &&
+                        document.getElementById('video-popup').style.display === 'flex') {
+                        return;
+                    }
+
                     document.getElementById('scanning-overlay').style.display = 'none';
                     document.getElementById('video-popup').style.display = 'flex';
                     document.getElementById('audio-controls').style.display = 'block';
@@ -946,17 +973,14 @@
                     // รีเซ็ตปุ่มเป็น Play
                     setPlayBtnState(false);
 
-                    if (activeTarget && activeTarget.audio_url) {
-                        const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-                        if (audio) {
-                            audio.play().then(() => {
-                                setPlayBtnState(true);
-                            }).catch(err => {
-                                console.error('Audio autoplay prevented:', err);
-                                setPlayBtnState(false);
-                            });
-                            audio.dataset.wasPlaying = 'true';
-                        }
+                    if (item.audio_url) {
+                        playTargetAudio(item.audio_url).then(() => {
+                            if (activeAudio) activeAudio.dataset.wasPlaying = 'true';
+                            setPlayBtnState(true);
+                        }).catch(err => {
+                            console.error('Audio autoplay prevented:', err);
+                            setPlayBtnState(false);
+                        });
                     }
                 });
             });
@@ -968,18 +992,11 @@
             document.getElementById('audio-controls').style.display = 'none';
             document.getElementById('scanning-overlay').style.display = 'flex';
 
-            const uiVideo = document.getElementById('ui-video-player');
-            uiVideo.pause();
+            const uiVideoEl = document.getElementById('ui-video-player');
+            uiVideoEl.pause();
 
-            if (activeTarget) {
-                const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-                if (audio) {
-                    audio.pause();
-                    audio.currentTime = 0;
-                    audio.dataset.wasPlaying = 'false';
-                }
-                activeTarget = null;
-            }
+            stopAllAudios();
+            activeTarget = null;
 
             const sys = scene.systems['mindar-image-system'];
             if (sys) sys.unpause();
@@ -1037,9 +1054,9 @@
 
         // ── ปุ่มเล่น/หยุดเสียง (Toggle - Icon + Text) ──
         playBtn.addEventListener('click', () => {
-            if (!activeTarget) return;
-            const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-            if (!audio) return;
+            if (!activeTarget?.audio_url) return;
+            const audio = getAudioPlayer(activeTarget.audio_url);
+            activeAudio = audio;
 
             if (audio.paused) {
                 audio.play();
@@ -1076,10 +1093,13 @@
         function startMindAR() {
             preloadUniqueVideos();
 
-            document.querySelectorAll('audio').forEach(a => {
-                a.muted = true;
-                a.play().then(() => { a.pause(); a.muted = false; }).catch(() => { });
-            });
+            const sampleAudio = getAudioPlayer(data[0].audio_url);
+            sampleAudio.muted = true;
+            sampleAudio.play().then(() => {
+                sampleAudio.pause();
+                sampleAudio.muted = false;
+                sampleAudio.currentTime = 0;
+            }).catch(() => { });
 
             const v = uiVideo;
             v.muted = true;
@@ -1115,11 +1135,8 @@
 
             if (arLoadTimer) { clearInterval(arLoadTimer); arLoadTimer = null; }
 
-            if (activeTarget) {
-                const audio = document.getElementById(`audio-${activeTarget.target_index}`);
-                if (audio) { audio.pause(); audio.currentTime = 0; delete audio.dataset.wasPlaying; }
-                activeTarget = null;
-            }
+            stopAllAudios();
+            activeTarget = null;
 
             document.getElementById('ar-loading-overlay').style.display = 'none';
             document.getElementById('scanning-overlay').style.display = 'none';
