@@ -135,7 +135,6 @@
             background: linear-gradient(90deg, #b83e0a 0%, #d4a843 100%);
             width: 0%;
             transition: width 0.1s linear;
-            /* ปรับให้วิ่งเนียนขึ้น */
         }
 
         .ar-load-sub {
@@ -520,7 +519,6 @@
             max-height: 75vh;
             border-radius: 12px;
             border: none;
-            /* กรอบทองถูกถอดออกตามความต้องการ */
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
             background: #000;
             object-fit: contain;
@@ -543,7 +541,7 @@
             background: rgba(212, 168, 67, 0.15);
         }
 
-        /* ═══════════ AUDIO CONTROLS ═══════════ */
+        /* ═══════════ AUDIO CONTROLS (ICON BUTTON) ═══════════ */
         #audio-controls {
             position: fixed;
             bottom: clamp(30px, 8vh, 50px);
@@ -557,28 +555,40 @@
             background: rgba(15, 4, 0, 0.90);
             border: 1px solid var(--gold);
             color: var(--gold-light);
-            padding: 14px 28px;
-            border-radius: 50px;
-            font-family: 'Sarabun', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 600;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 168, 67, 0.2);
             cursor: pointer;
             backdrop-filter: blur(10px);
-            transition: transform 0.2s, background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            white-space: nowrap;
+            transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
         }
 
         #play-audio-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.08);
             background: rgba(30, 8, 0, 0.95);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(212, 168, 67, 0.3);
         }
 
         #play-audio-btn:active {
             transform: scale(0.95);
+        }
+
+        /* ไอคอนจะถูกจัดให้อยู่กึ่งกลางพอดี */
+        #play-audio-btn svg {
+            width: 26px;
+            height: 26px;
+            fill: currentColor;
+            /* ขยับไอคอน Play ไปทางขวานิดนึงให้ดูสมดุลตรงกลาง */
+            margin-left: 2px;
+        }
+
+        #play-audio-btn.playing svg {
+            /* ไอคอน Pause ไม่ต้องขยับ */
+            margin-left: 0;
         }
 
         .toast {
@@ -691,8 +701,14 @@
         <button id="close-video-btn">✖ ปิดเพื่อสแกนใหม่</button>
     </div>
 
+    <!-- ปุ่ม Audio เป็นไอคอนวงกลม -->
     <div id="audio-controls">
-        <button id="play-audio-btn">▶ เล่นคำอวยพร</button>
+        <button id="play-audio-btn">
+            <!-- Default เป็นไอคอน Play -->
+            <svg viewBox="0 0 24 24">
+                <path d="M8 5.14v14l11-7-11-7z" />
+            </svg>
+        </button>
     </div>
 
     <a-scene id="scene" mindar-image="imageTargetSrc: mind_files/alltargets.mind; autoStart: false; uiScanning: no;"
@@ -704,6 +720,10 @@
         const scene = document.querySelector('#scene');
         let activeTarget = null;
         const playBtn = document.getElementById('play-audio-btn');
+
+        // ไอคอน SVG
+        const iconPlay = `<svg viewBox="0 0 24 24"><path d="M8 5.14v14l11-7-11-7z"/></svg>`;
+        const iconPause = `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
 
         // ── ข้อมูลวิดีโอ และ เสียง ──
         const data = [
@@ -763,7 +783,7 @@
 
             if (arLoadTimer) clearInterval(arLoadTimer);
 
-            // อัปเดตทุก 50ms ให้วิ่งไปถึง 90% ในเวลาประมาณ 3 วินาที (60 รอบ * +1.5 = 90%)
+            // อัปเดตวิ่งไปถึง 90% ในเวลาประมาณ 3 วินาที
             arLoadTimer = setInterval(() => {
                 if (currentPct < 90) {
                     currentPct += 1.5;
@@ -776,11 +796,12 @@
                     else if (currentPct < 45) subEl.textContent = 'วิเคราะห์ Image Targets...';
                     else if (currentPct < 70) subEl.textContent = 'เตรียม Neural Network...';
                     else if (currentPct < 90) subEl.textContent = 'กำลังเปิดกล้อง...';
-                    else subEl.textContent = 'รอระบบกล้องพร้อมทำงาน...'; // หยุดรอที่ 90% จนกว่า Event arReady จะทำงาน
+                    else subEl.textContent = 'รอระบบกล้องพร้อมทำงาน...';
                 }
             }, 50);
         }
 
+        // ทำให้หลอดวิ่งเติมเต็ม 100% อย่างนุ่มนวล หลัง arReady ติด
         function finishARLoading() {
             if (arLoadTimer) { clearInterval(arLoadTimer); arLoadTimer = null; }
 
@@ -788,14 +809,24 @@
             const barEl = document.getElementById('ar-load-bar');
             const subEl = document.getElementById('ar-load-sub');
 
-            pctEl.textContent = '100%';
-            barEl.style.width = '100%';
-            subEl.textContent = '✦ พร้อมแล้ว! หันกล้องไปที่พระพิฆเนศ';
+            // วิ่งจากจุดที่ค้างอยู่ (เช่น 90%) ไปจนถึง 100% ภายในเวลาสั้นๆ
+            let smoothCompleteTimer = setInterval(() => {
+                if (currentPct < 100) {
+                    currentPct += 2;
+                    if (currentPct >= 100) currentPct = 100;
 
-            setTimeout(() => {
-                document.getElementById('ar-loading-overlay').style.display = 'none';
-                document.getElementById('scanning-overlay').style.display = 'flex';
-            }, 800);
+                    pctEl.textContent = Math.floor(currentPct) + '%';
+                    barEl.style.width = currentPct + '%';
+                } else {
+                    clearInterval(smoothCompleteTimer);
+                    subEl.textContent = '✦ พร้อมแล้ว! หันกล้องไปที่พระพิฆเนศ';
+
+                    setTimeout(() => {
+                        document.getElementById('ar-loading-overlay').style.display = 'none';
+                        document.getElementById('scanning-overlay').style.display = 'flex';
+                    }, 400); // ดีเลย์นิดนึงให้ผู้ใช้เห็นว่าโหลดครบ 100% แล้ว
+                }
+            }, 20);
         }
 
         // ── โหลด AR Entities ──
@@ -833,15 +864,20 @@
 
                     activeTarget = item;
 
-                    playBtn.innerHTML = '▶ เล่นคำอวยพร';
+                    // รีเซ็ตปุ่มเป็น Play
+                    playBtn.innerHTML = iconPlay;
+                    playBtn.classList.remove('playing');
+
                     if (activeTarget && activeTarget.audio_url) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                         if (audio) {
                             audio.play().then(() => {
-                                playBtn.innerHTML = '⏸ หยุดรับคำอวยพร';
+                                playBtn.innerHTML = iconPause;
+                                playBtn.classList.add('playing');
                             }).catch(err => {
                                 console.error('Audio autoplay prevented:', err);
-                                playBtn.innerHTML = '▶ เล่นคำอวยพร';
+                                playBtn.innerHTML = iconPlay;
+                                playBtn.classList.remove('playing');
                             });
                             audio.dataset.wasPlaying = 'true';
                         }
@@ -923,7 +959,7 @@
             }, { enableHighAccuracy: true });
         }
 
-        // ── ปุ่มเล่น/หยุดเสียง (Toggle) ──
+        // ── ปุ่มเล่น/หยุดเสียง (Toggle - Icon Version) ──
         playBtn.addEventListener('click', () => {
             if (!activeTarget) return;
             const audio = document.getElementById(`audio-${activeTarget.target_index}`);
@@ -932,11 +968,13 @@
             if (audio.paused) {
                 audio.play();
                 audio.dataset.wasPlaying = 'true';
-                playBtn.innerHTML = '⏸ หยุดรับคำอวยพร';
+                playBtn.innerHTML = iconPause;
+                playBtn.classList.add('playing');
             } else {
                 audio.pause();
                 audio.dataset.wasPlaying = 'false';
-                playBtn.innerHTML = '▶ เล่นคำอวยพร';
+                playBtn.innerHTML = iconPlay;
+                playBtn.classList.remove('playing');
             }
         });
 
@@ -987,7 +1025,7 @@
                 }, { once: true });
             }
 
-            // จบ loading ทันทีที่ MindAR แจ้งเตือนว่ากล้องและระบบพร้อม (100% เท่านั้น)
+            // ระบบพร้อมแล้วค่อยรัน finishARLoading เพื่อให้หลอดวิ่งจนจบ 100%
             scene.addEventListener('arReady', finishARLoading, { once: true });
         }
 
