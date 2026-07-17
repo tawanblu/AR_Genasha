@@ -498,18 +498,18 @@
             border-radius: 0 0 0 4px;
         }
 
-        /* ═══════════ VIDEO POPUP ═══════════ */
+        /* ═══════════ VIDEO POPUP (พื้นหลังใส — เห็นกล้อง AR ด้านหลัง) ═══════════ */
         #video-popup {
             position: fixed;
             inset: 0;
             z-index: 250;
-            background: rgba(15, 4, 0, 0.95);
+            background: transparent;
             display: none;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(10px);
             padding: 20px;
+            pointer-events: none;
         }
 
         #ui-video-player {
@@ -518,15 +518,16 @@
             height: auto;
             max-height: 75vh;
             border-radius: 12px;
-            border: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-            background: #000;
+            border: 1px solid rgba(212, 168, 67, 0.35);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+            background: transparent;
             object-fit: contain;
+            pointer-events: auto;
         }
 
         #close-video-btn {
             margin-top: 24px;
-            background: transparent;
+            background: rgba(15, 4, 0, 0.75);
             border: 1px solid var(--gold);
             color: var(--gold-light);
             padding: 12px 28px;
@@ -535,6 +536,8 @@
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
         }
 
         #close-video-btn:hover {
@@ -962,10 +965,6 @@
                     document.getElementById('video-popup').style.display = 'flex';
                     document.getElementById('audio-controls').style.display = 'block';
 
-                    // หยุดระบบ AR ชั่วคราว
-                    const sys = scene.systems['mindar-image-system'];
-                    if (sys) sys.pause();
-
                     playTargetVideo(uiVideo, item.video_url);
 
                     activeTarget = item;
@@ -997,9 +996,6 @@
 
             stopAllAudios();
             activeTarget = null;
-
-            const sys = scene.systems['mindar-image-system'];
-            if (sys) sys.unpause();
         });
 
 
