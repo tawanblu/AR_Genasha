@@ -39,7 +39,6 @@
             color: var(--gold-light);
             width: 100%;
             height: 100%;
-            height: 100dvh;
             position: fixed;
         }
 
@@ -77,7 +76,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: clamp(10px, 2.5vh, 18px);
+            gap: 18px;
             background: rgba(10, 2, 0, 0.92);
             backdrop-filter: blur(6px);
             text-align: center;
@@ -85,7 +84,7 @@
         }
 
         .ar-load-symbol {
-            font-size: clamp(2rem, 8vh, 3rem);
+            font-size: 3rem;
             color: var(--gold-light);
             animation: om-pulse 2s ease-in-out infinite;
             text-shadow: 0 0 20px rgba(212, 168, 67, 0.4);
@@ -107,13 +106,13 @@
 
         .ar-load-title {
             font-family: 'Cinzel Decorative', serif;
-            font-size: clamp(0.9rem, 3vw, 1.2rem);
+            font-size: clamp(1rem, 3vw, 1.2rem);
             color: var(--gold-light);
             letter-spacing: 0.06em;
         }
 
         .ar-load-pct {
-            font-size: clamp(1.8rem, 6vh, 2.8rem);
+            font-size: 2.8rem;
             font-weight: 700;
             color: var(--gold);
             line-height: 1;
@@ -152,11 +151,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: clamp(12px, 4vw, 24px);
+            padding: 24px;
             background: radial-gradient(ellipse 75% 55% at 50% 38%, rgba(180, 55, 5, 0.55) 0%, rgba(120, 30, 0, 0.30) 40%, transparent 70%),
                 radial-gradient(ellipse 100% 80% at 50% 0%, rgba(90, 20, 0, 0.40) 0%, transparent 65%), #0f0400;
             transition: opacity 0.55s ease, transform 0.55s ease;
-            overflow-y: auto;
         }
 
         #menu.hide {
@@ -178,13 +176,10 @@
             position: relative;
             z-index: 2;
             width: min(92vw, 420px);
-            max-height: 92vh;
-            overflow-y: auto;
-            margin: auto;
             background: rgba(18, 6, 0, 0.80);
             border: 1px solid rgba(212, 168, 67, 0.22);
             border-radius: 24px;
-            padding: clamp(20px, 5vh, 46px) clamp(20px, 5vw, 40px);
+            padding: clamp(32px, 6vw, 46px) clamp(24px, 5vw, 40px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -194,7 +189,7 @@
         }
 
         .om {
-            font-size: clamp(2rem, 7vh, 3.4rem);
+            font-size: clamp(2.6rem, 8vw, 3.4rem);
             color: var(--gold-light);
             line-height: 1;
             margin-bottom: 12px;
@@ -203,7 +198,7 @@
 
         .title {
             font-family: 'Cinzel Decorative', serif;
-            font-size: clamp(1.1rem, 4vw, 1.6rem);
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
             font-weight: 900;
             color: var(--gold-light);
             letter-spacing: 0.05em;
@@ -212,16 +207,16 @@
         }
 
         .desc {
-            font-size: clamp(0.78rem, 2.2vw, 0.90rem);
+            font-size: clamp(0.80rem, 2.2vw, 0.90rem);
             color: var(--text-dim);
-            line-height: 1.7;
+            line-height: 1.8;
             font-weight: 300;
-            margin-bottom: 20px;
+            margin-bottom: 22px;
         }
 
         #start-btn {
             width: 100%;
-            padding: clamp(12px, 3vh, 16px) 24px;
+            padding: 16px 24px;
             border-radius: 14px;
             border: 1px solid rgba(212, 168, 67, 0.32);
             background: linear-gradient(135deg, #b83e0a 0%, #7a2006 60%, #4e1003 100%);
@@ -259,7 +254,7 @@
             color: rgba(212, 168, 67, 0.8);
             font-family: 'Sarabun', sans-serif;
             font-size: 0.9rem;
-            margin-top: 14px;
+            margin-top: 16px;
             cursor: pointer;
             text-decoration: underline;
             text-underline-offset: 4px;
@@ -279,7 +274,7 @@
             color: #7ed99a;
             font-weight: 600;
             letter-spacing: 0.04em;
-            margin-top: 12px;
+            margin-top: 14px;
             min-height: 1.2em;
             text-align: center;
         }
@@ -287,8 +282,8 @@
         /* ═══════════ BACK BUTTON (IN AR) ═══════════ */
         #back-btn {
             position: fixed;
-            top: max(16px, env(safe-area-inset-top, 16px));
-            left: 16px;
+            top: max(20px, env(safe-area-inset-top, 20px));
+            left: 20px;
             z-index: 500;
             display: none;
             align-items: center;
@@ -296,10 +291,10 @@
             background: rgba(15, 4, 0, 0.85);
             border: 1px solid var(--gold-border);
             color: var(--gold-light);
-            padding: clamp(8px, 2vh, 10px) clamp(14px, 4vw, 18px);
+            padding: 10px 18px;
             border-radius: 50px;
             font-family: 'Sarabun', sans-serif;
-            font-size: clamp(0.82rem, 2.4vw, 0.95rem);
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             backdrop-filter: blur(10px);
@@ -325,37 +320,33 @@
             display: none;
             align-items: center;
             justify-content: center;
-            padding: clamp(12px, 4vw, 24px);
+            padding: 24px;
             background: rgba(15, 4, 0, 0.75);
             backdrop-filter: blur(10px);
             transition: opacity 0.4s ease;
-            overflow-y: auto;
         }
 
         #instruction-panel {
             background: rgba(18, 6, 0, 0.95);
             border: 1px solid rgba(212, 168, 67, 0.4);
             border-radius: 20px;
-            padding: clamp(20px, 5vh, 32px) clamp(18px, 5vw, 28px);
-            width: min(90vw, 400px);
-            max-height: 90vh;
-            overflow-y: auto;
-            margin: auto;
+            padding: 32px 28px;
+            max-width: min(90vw, 400px);
             text-align: center;
             box-shadow: 0 16px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 168, 67, 0.1);
         }
 
         .inst-title {
-            font-size: clamp(1.05rem, 4vw, 1.3rem);
+            font-size: 1.3rem;
             color: var(--gold-light);
             font-weight: 600;
-            margin-bottom: clamp(12px, 3vh, 20px);
+            margin-bottom: 20px;
             text-shadow: 0 2px 10px rgba(212, 168, 67, 0.3);
         }
 
         .tutorial-video-container {
             width: 100%;
-            margin-bottom: clamp(12px, 3vh, 20px);
+            margin-bottom: 20px;
             border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--gold-border);
@@ -366,22 +357,21 @@
         #tutorial-video {
             width: 100%;
             display: block;
-            height: auto;
-            max-height: 40vh;
-            object-fit: contain;
+            aspect-ratio: 16/9;
+            object-fit: cover;
         }
 
         .inst-list {
             text-align: left;
             color: var(--text-dim);
-            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-            line-height: 1.65;
-            margin-bottom: clamp(16px, 4vh, 28px);
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 28px;
             padding-left: 20px;
         }
 
         .inst-list li {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .inst-list li::marker {
@@ -390,7 +380,7 @@
 
         #understand-btn {
             width: 100%;
-            padding: clamp(12px, 3vh, 14px) 24px;
+            padding: 14px 24px;
             border-radius: 12px;
             border: 1px solid var(--gold);
             background: transparent;
@@ -427,11 +417,11 @@
             background: rgba(15, 4, 0, 0.88);
             border: 1px solid var(--gold-border);
             border-radius: 999px;
-            padding: clamp(8px, 2vh, 10px) 20px 10px 14px;
+            padding: 10px 20px 10px 14px;
             backdrop-filter: blur(16px);
             box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
             pointer-events: auto;
-            margin-top: clamp(24px, 8vh, 60px);
+            margin-top: 60px;
         }
 
         .scan-dot {
@@ -462,13 +452,12 @@
             color: var(--gold-light);
         }
 
-        /* กรอบสแกน */
         .scan-frame {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: min(68vw, 260px, 45vh);
+            width: min(68vw, 260px);
             aspect-ratio: 3/4;
             pointer-events: none;
         }
@@ -509,7 +498,7 @@
             border-radius: 0 0 0 4px;
         }
 
-        /* ═══════════ VIDEO POPUP (เล่นค้างบนจอ) ═══════════ */
+        /* ═══════════ VIDEO POPUP (เล่นค้างบนจอแบบ Responsive สุดๆ) ═══════════ */
         #video-popup {
             position: fixed;
             inset: 0;
@@ -520,29 +509,34 @@
             align-items: center;
             justify-content: center;
             backdrop-filter: blur(10px);
-            padding: clamp(12px, 4vw, 24px);
-            gap: clamp(16px, 4vh, 24px);
+            padding: 20px;
         }
 
         #ui-video-player {
-            max-width: 90vw;
-            max-height: 65vh;
-            width: auto;
+            width: 100%;
+            max-width: 450px;
+            /* จำกัดความกว้างไม่ให้ใหญ่เกินไปในจอคอมพิวเตอร์ */
             height: auto;
+            max-height: 75vh;
+            /* ป้องกันไม่ให้วิดีโอล้นจอในแนวตั้ง */
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--gold);
+            /* ขอบทองคงไว้ตามเดิม */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(212, 168, 67, 0.2);
             background: #000;
-            display: block;
+            /* ใช้ contain เพื่อให้วิดีโอแสดงเต็มกรอบและพอดีหน้าจอเสมอโดยไม่โดนตัด */
+            object-fit: contain;
         }
 
         #close-video-btn {
+            margin-top: 24px;
             background: transparent;
             border: 1px solid var(--gold);
             color: var(--gold-light);
-            padding: clamp(10px, 2.5vh, 12px) 28px;
+            padding: 12px 28px;
             border-radius: 50px;
             font-family: 'Sarabun', sans-serif;
-            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -554,23 +548,21 @@
         /* ═══════════ AUDIO CONTROLS ═══════════ */
         #audio-controls {
             position: fixed;
-            bottom: clamp(20px, 6vh, 50px);
+            bottom: clamp(30px, 8vh, 50px);
             left: 50%;
             transform: translateX(-50%);
             z-index: 300;
             display: none;
-            width: min(92vw, 340px);
         }
 
         #play-audio-btn {
-            width: 100%;
             background: rgba(15, 4, 0, 0.90);
             border: 1px solid var(--gold);
             color: var(--gold-light);
-            padding: clamp(12px, 3vh, 14px) 20px;
+            padding: 14px 28px;
             border-radius: 50px;
             font-family: 'Sarabun', sans-serif;
-            font-size: clamp(0.9rem, 3vw, 1.05rem);
+            font-size: 1.05rem;
             font-weight: 600;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(212, 168, 67, 0.2);
             cursor: pointer;
@@ -578,8 +570,8 @@
             transition: transform 0.2s, background 0.2s;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 8px;
+            white-space: nowrap;
         }
 
         #play-audio-btn:hover {
@@ -614,39 +606,6 @@
         .toast.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
-        }
-
-        /* ═══════════ LANDSCAPE / SHORT VIEWPORT ═══════════ */
-        @media (orientation: landscape) and (max-height: 500px) {
-            #menu-panel {
-                padding: 16px 24px;
-            }
-
-            .om {
-                font-size: 1.6rem;
-                margin-bottom: 6px;
-            }
-
-            .title {
-                font-size: 1rem;
-                margin-bottom: 8px;
-            }
-
-            .desc {
-                margin-bottom: 12px;
-            }
-
-            #instruction-panel {
-                max-height: 94vh;
-            }
-
-            #tutorial-video {
-                max-height: 30vh;
-            }
-
-            #ui-video-player {
-                max-height: 60vh;
-            }
         }
     </style>
 </head>
@@ -708,11 +667,10 @@
                 </li>
                 <li>
                     หันกล้องไปที่ <strong>องค์พระพิฆเนศ</strong>
-                    เพื่อให้ระบบสแกนและแสดงวิดีโอ (เมื่อสแกนติดแล้ว วิดีโอจะเด้งขึ้นมาเล่นโดยอัตโนมัติ
-                    ไม่ต้องถือกล้องค้างไว้)
+                    เพื่อให้ระบบสแกนและแสดงวิดีโอ (เมื่อสแกนติดแล้ว วิดีโอจะเด้งขึ้นมาเล่นค้างบนจอโดยอัตโนมัติ)
                 </li>
                 <li>
-                    กดปุ่ม <strong>"เล่น / หยุดรับคำอวยพร"</strong> เพื่อรับฟังเสียงคำอวยพร
+                    สามารถกดปุ่ม <strong>"เล่น / หยุดรับคำอวยพร"</strong> เพื่อเปิด-ปิดเสียงได้
                 </li>
             </ul>
             <button id="understand-btn" onclick="closeInstructions()">เข้าใจแล้ว</button>
@@ -736,15 +694,7 @@
     </div>
 
     <div id="audio-controls">
-        <button id="play-audio-btn">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-            </svg>
-            หยุดรับคำอวยพร
-        </button>
+        <button id="play-audio-btn">▶ เล่นคำอวยพร</button>
     </div>
 
     <!-- ตัด <a-assets> ออกไปได้เลยเพราะเปลี่ยนมาใช้วิดีโอบน HTML ธรรมดาแทนแล้ว -->
@@ -756,29 +706,7 @@
     <script>
         const scene = document.querySelector('#scene');
         let activeTarget = null;
-
-        // ── ฟังก์ชันเปลี่ยนสถานะปุ่มเสียง ──
-        function updateAudioButton(isPlaying) {
-            const btn = document.getElementById('play-audio-btn');
-            if (isPlaying) {
-                btn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                    </svg>
-                    หยุดรับคำอวยพร
-                `;
-            } else {
-                btn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <line x1="23" y1="1" x2="1" y2="23"></line>
-                    </svg>
-                    เล่นคำอวยพร
-                `;
-            }
-        }
+        const playBtn = document.getElementById('play-audio-btn');
 
         // ── ข้อมูลวิดีโอ และ เสียง (36 targets) ──
         const data = [
@@ -896,7 +824,7 @@
                     document.getElementById('video-popup').style.display = 'flex';
                     document.getElementById('audio-controls').style.display = 'block';
 
-                    // หยุดระบบ AR ชั่วคราว (ไม่ต้องขยับมือถือตามภาพแล้ว วิดีโอจะเล่นค้างบนจอ)
+                    // หยุดระบบ AR ชั่วคราว (สแกนติดแล้วเล่นค้าง ไม่ต้องถือกล้องค้างไว้)
                     const sys = scene.systems['mindar-image-system'];
                     if (sys) sys.pause();
 
@@ -909,13 +837,18 @@
 
                     activeTarget = item;
 
-                    // เล่นเสียงอัตโนมัติ
+                    // เล่นเสียงอัตโนมัติ และอัปเดตข้อความปุ่ม
+                    playBtn.innerHTML = '▶ เล่นคำอวยพร';
                     if (activeTarget && activeTarget.audio_url) {
                         const audio = document.getElementById(`audio-${activeTarget.target_index}`);
                         if (audio) {
-                            audio.play().catch(err => console.error(err));
+                            audio.play().then(() => {
+                                playBtn.innerHTML = '⏸ หยุดรับคำอวยพร';
+                            }).catch(err => {
+                                console.error('Audio autoplay prevented:', err);
+                                playBtn.innerHTML = '▶ เล่นคำอวยพร';
+                            });
                             audio.dataset.wasPlaying = 'true';
-                            updateAudioButton(true);
                         }
                     }
                 });
@@ -950,14 +883,8 @@
 
 
         // ── GPS ──
-        // พิกัดมหาวิทยาลัยศิลปากร วิทยาเขตสารสนเทศเพชรบุรี
-        const TARGET_LAT = 12.637175;
-        const TARGET_LNG = 99.860662;
-
-        // คอมเมนต์พิกัดเดิมเก็บไว้ เผื่อต้องการใช้งานภายหลัง
-        // const TARGET_LAT = 13.895402;
-        // const TARGET_LNG = 100.5621089;
-
+        const TARGET_LAT = 13.895402;
+        const TARGET_LNG = 100.5621089;
         const MAX_DISTANCE = 1000000;
 
         function getDistanceFromLatLonInM(lat1, lon1, lat2, lon2) {
@@ -1004,8 +931,8 @@
             }, { enableHighAccuracy: true });
         }
 
-        // ── ปุ่มเล่น/หยุดเสียง ──
-        document.getElementById('play-audio-btn').addEventListener('click', () => {
+        // ── ปุ่มเล่น/หยุดเสียง (Toggle) ──
+        playBtn.addEventListener('click', () => {
             if (!activeTarget) return;
             const audio = document.getElementById(`audio-${activeTarget.target_index}`);
             if (!audio) return;
@@ -1013,11 +940,11 @@
             if (audio.paused) {
                 audio.play();
                 audio.dataset.wasPlaying = 'true';
-                updateAudioButton(true);
+                playBtn.innerHTML = '⏸ หยุดรับคำอวยพร';
             } else {
                 audio.pause();
                 audio.dataset.wasPlaying = 'false';
-                updateAudioButton(false);
+                playBtn.innerHTML = '▶ เล่นคำอวยพร';
             }
         });
 
