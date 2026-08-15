@@ -73,7 +73,6 @@ if ($checkTable && $checkTable->num_rows > 0) {
 $labels_ar = [];
 $dataViews_ar = [];
 
-// [อัปเดตแล้ว] เปลี่ยน l.target_id เป็น l.info_id ให้ตรงกับ Database
 $sqlRanking = "SELECT g.title_ganesha, COUNT(l.log_id) AS view_count
                FROM ganesha_info g
                LEFT JOIN access_logs l ON g.info_id = l.info_id AND l.action_type = 'view_model'

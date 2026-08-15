@@ -4,7 +4,6 @@ require_once("connect.php");
 
 if (isset($_POST['action'])) {
     $action = $_POST['action'];
-    // เปลี่ยนชื่อตัวแปรจาก $target_id เป็น $info_id เพื่อความไม่งง
     $info_id = isset($_POST['id']) && $_POST['id'] !== '' ? intval($_POST['id']) : null;
 
     // แยกคำสั่ง SQL เพื่อป้องกันบั๊กของ MySQLi เวลาบันทึกค่า NULL
