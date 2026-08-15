@@ -73,10 +73,10 @@ if ($checkTable && $checkTable->num_rows > 0) {
 $labels_ar = [];
 $dataViews_ar = [];
 
-// ปรับ SQL ให้นับ log_id ที่ตรงกับ target_id ขององค์พระนั้นๆ อย่างแม่นยำ และกรองตามสถิติ view_model
+// [อัปเดตแล้ว] เปลี่ยน l.target_id เป็น l.info_id ให้ตรงกับ Database
 $sqlRanking = "SELECT g.title_ganesha, COUNT(l.log_id) AS view_count
                FROM ganesha_info g
-               LEFT JOIN access_logs l ON g.info_id = l.target_id AND l.action_type = 'view_model'
+               LEFT JOIN access_logs l ON g.info_id = l.info_id AND l.action_type = 'view_model'
                GROUP BY g.info_id
                ORDER BY view_count DESC
                LIMIT 5";
