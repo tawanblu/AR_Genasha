@@ -10,7 +10,7 @@ if (!isset($_SESSION['username']) || !isset($_SESSION['role']) || $_SESSION['rol
 
 $adminNav = basename($_SERVER['PHP_SELF']);
 
-function getCount($conn, $sql)
+function getCount(mysqli $conn, $sql)
 {
     $result = $conn->query($sql);
     if (!$result) {
@@ -19,7 +19,7 @@ function getCount($conn, $sql)
     return $result->fetch_assoc()['total'] ?? 0;
 }
 
-function safeQuery($conn, $sql)
+function safeQuery(mysqli $conn, $sql)
 {
     $result = $conn->query($sql);
     if (!$result) return 0;
@@ -35,6 +35,10 @@ $end_date = $_GET['end_date'] ?? '';
 
 $where_restaurant_reviews = "";
 $where_place_reviews = "";
+
+// ---> เพิ่ม 2 บรรทัดนี้ เพื่อบอก VS Code ว่าเราเตรียมตัวแปรไว้แล้ว <---
+$s_date = "";
+$e_date = "";
 
 if (!empty($start_date) && !empty($end_date)) {
     $s_date = $conn->real_escape_string($start_date) . " 00:00:00";
